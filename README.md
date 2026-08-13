@@ -15,7 +15,7 @@ Also nichts Besonderes, aber für meinen Gebrauch reicht das vollkommen aus. Wer
 - Einfache Konfiguration: Per Doppelklick auf das App-Icon öffnen sich die Einstellungen, in denen Abfahrtsbahnhof, Zielbahnhof und die Prüfzeiten angepasst werden können.
 
 ## Datenquelle
-Die App zieht die Daten von den Webseiten von [Südtirol Mobil](https://www.suedtirolmobil.info), macht den Quervergleich über die Webseite der RFI Monitore - Anzeigetafeln z.B. für Brixen [RFI Monitor](https://iechub.rfi.it/ArriviPartenze/arrivalsdepartures/Monitor?placeId=738&arrivals=false), da auf [viaggiatreno.it](http://www.viaggiatreno.it/infomobilita/index.jsp) leider die Sad-Züge fehlen.
+Die App zieht die Daten von den Webseiten von [Südtirol Mobil](https://www.suedtirolmobil.info), macht den Quervergleich über die Webseite der RFI Monitore - Anzeigetafeln z.B. für Brixen [RFI Monitor](https://iechub.rfi.it/ArriviPartenze/arrivalsdepartures/Monitor?placeId=738&arrivals=false). [viaggiatreno.it](http://www.viaggiatreno.it/infomobilita/index.jsp) konnte leider nicht verwendet werden, da die Sad-Züge fehlen.
 
 ## Installation & Start
 
