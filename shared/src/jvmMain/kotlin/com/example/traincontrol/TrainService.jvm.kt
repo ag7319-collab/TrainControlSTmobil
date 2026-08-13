@@ -155,11 +155,52 @@ actual class TrainService actual constructor() {
                         }
                         if (tripBanned) continue
 
-                        val mainLeg = legs.firstOrNull { legObj ->
-                            val transp = (legObj["transportation"] as? JsonObject) ?: (legObj["mode"] as? JsonObject)
-                            val tName = (transp?.get("name") as? JsonPrimitive)?.content ?: ""
-                            !tName.contains("Fußweg", ignoreCase = true) && (legObj["isWalk"] as? JsonPrimitive)?.booleanOrNull != true
-                        } ?: continue
+                        /*
+                         * =====================================================
+                         * DIREKTVERBINDUNG PRÜFEN (Abfahrtstafel-Modus)
+                         * =====================================================
+                         *
+                         * Um das Verhalten der Südtirol Mobil Abfahrtstafel zu
+                         * imitieren, zeigen wir nur Züge an, die DIREKT zum Ziel
+                         * fahren (ohne Umsteigen).
+                         *
+                         * EFA Trip-Request liefert uns Journeys. Eine Journey ist
+                         * direkt, wenn sie nur ein einziges Fahrzeug-Leg hat.
+                         */
+                        val vehicleLegs = legs.filter { leg ->
+                            val legTransp = (leg["transportation"] as? JsonObject) ?: (leg["mode"] as? JsonObject)
+                            val legName = (legTransp?.get("name") as? JsonPrimitive)?.content ?: ""
+                            val isWalk = legName.contains("Fußweg", ignoreCase = true) || (leg["isWalk"] as? JsonPrimitive)?.booleanOrNull == true
+                            !isWalk
+                        }
+
+                        if (vehicleLegs.size > 1) {
+                            // Verbindung erfordert Umsteigen -> Ausblenden
+                            continue
+                        }
+
+                        /*
+                         * =====================================================
+                         * TRIP-VOLLSTÄNDIGKEIT PRÜFEN
+                         * =====================================================
+                         */
+                        val lastLeg = legs.lastOrNull()
+                        val tripDestNode = (lastLeg?.get("destination") as? JsonObject)
+                        val tripDestId = (tripDestNode?.get("id") as? JsonPrimitive)?.content ?: ""
+                        val tripDestName = (tripDestNode?.get("name") as? JsonPrimitive)?.content ?: ""
+
+                        val targetIdSuffix = if (efaToId.length >= 4) efaToId.takeLast(4) else efaToId
+                        val matchesTargetId = targetIdSuffix.isNotEmpty() && tripDestId.contains(targetIdSuffix)
+
+                        val cleanTarget = targetStation.name.split("/").first().trim()
+                        val matchesTargetName = tripDestName.contains(cleanTarget, ignoreCase = true) ||
+                                targetStation.name.contains(tripDestName.split("/").first().trim(), ignoreCase = true)
+
+                        if (!matchesTargetId && !matchesTargetName) {
+                            continue
+                        }
+
+                        val mainLeg = vehicleLegs.firstOrNull() ?: continue
 
                         val points = getAsList(mainLeg, "point").ifEmpty { getAsList(mainLeg, "points") }
                         val originNode = (mainLeg["origin"] as? JsonObject) ?: points.firstOrNull { ((it["usage"] as? JsonPrimitive)?.content == "departure") } ?: points.firstOrNull()
