@@ -459,18 +459,59 @@ fun StationDropdown(
 
 @Composable
 fun TrainItem(train: TrainInfo) {
+    val lightGray = Color(0xFF999999)
     Column(modifier = Modifier.padding(vertical = 12.dp)) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(train.categoryNumber, style = MaterialTheme.typography.titleMedium)
-            Text(train.time, style = MaterialTheme.typography.titleMedium)
-        }
-        Text("Fährt nach: ${train.destination}", style = MaterialTheme.typography.bodyMedium)
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(if (train.isBus) "BUS" else "Gleis: ${train.platform}", style = MaterialTheme.typography.bodySmall)
-            Text(
-                text = train.delay,
-                color = if (train.hasDelay) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Links: Zug-Kategorie und Nummer
+            Column(modifier = Modifier.weight(1f)) {
+                Text(train.categoryNumber, style = MaterialTheme.typography.titleMedium)
+                Text("Fährt nach: ${train.destination}", style = MaterialTheme.typography.bodyMedium)
+                Text(if (train.isBus) "BUS" else "Gleis: ${train.platform}", style = MaterialTheme.typography.bodySmall)
+            }
+
+            // Mitte: RFI Monitor (Gegencheck)
+            if (train.rfiStatus != null || train.rfiDelay != null) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = train.rfiDelay ?: "0+",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = lightGray
+                    )
+                    Text(
+                        text = "RFI-Monitor",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = lightGray
+                    )
+                    Text(
+                        text = train.rfiStatus ?: "pünktlich",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = lightGray
+                    )
+                }
+            } else {
+                // Spacer um die Mitte leer zu halten falls kein RFI Match
+                Box(modifier = Modifier.weight(1f))
+            }
+
+            // Rechts: Uhrzeit und EFA-Status
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(train.time, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = train.delay,
+                    color = if (train.hasDelay) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }

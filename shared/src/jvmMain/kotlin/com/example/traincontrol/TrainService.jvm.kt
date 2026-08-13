@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CancellationException
+import org.jsoup.Jsoup
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
@@ -210,6 +211,77 @@ actual class TrainService actual constructor() {
 
                     if (rawTrainList.size >= limit) break
                 }
+
+                // --- RFI GEGENCHECK (iechub.rfi.it) ---
+                try {
+                    val rfiUrl = "https://iechub.rfi.it/ArriviPartenze/arrivalsdepartures/Monitor?placeId=${fromStation.placeId}&arrivals=False"
+                    val rfiDoc = withContext(Dispatchers.IO) {
+                        try {
+                            Jsoup.connect(rfiUrl)
+                                .timeout(8000)
+                                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                                .get()
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+
+                    if (rfiDoc != null) {
+                        val rfiRows = rfiDoc.select("tr")
+                        for (i in 0 until rawTrainList.size) {
+                            val train = rawTrainList[i]
+                            val efaNum = train.categoryNumber.filter { it.isDigit() }
+                            if (efaNum.isBlank()) continue
+
+                            // Suche in den RFI-Zeilen nach der Zugnummer
+                            val matchedRow = rfiRows.firstOrNull { row ->
+                                val rowText = row.text()
+                                // Zugnummer steht meist am Anfang oder in den ersten Spalten
+                                rowText.contains(efaNum)
+                            }
+
+                            if (matchedRow != null) {
+                                val cols = matchedRow.select("td")
+                                if (cols.size >= 5) {
+                                    // Spaltenindex bei RFI Monitor:
+                                    // Meist: [Kategorie+Nr] [Ziel] [Gleis] [Zeit] [Verspätung] ...
+                                    // Wir suchen das Zeit-Feld um die Verspätung daneben zu finden.
+                                    val timeRegex = Regex("""\b\d{2}:\d{2}\b""")
+                                    val colTexts = cols.map { it.text().trim() }
+                                    val timeIdx = colTexts.indexOfFirst { timeRegex.containsMatchIn(it) }
+                                    
+                                    if (timeIdx != -1 && colTexts.size > timeIdx + 1) {
+                                        val rawDelay = colTexts[timeIdx + 1]
+                                        val isCancelled = rawDelay.contains("SOP", ignoreCase = true) || 
+                                                          rawDelay.contains("CANC", ignoreCase = true) ||
+                                                          matchedRow.text().contains("SOPPRESSO", ignoreCase = true)
+
+                                        val statusText = when {
+                                            isCancelled -> "entfällt"
+                                            rawDelay.isBlank() || rawDelay == "0" -> "pünktlich"
+                                            else -> "Verspätung"
+                                        }
+
+                                        val delayDisplay = when {
+                                            isCancelled -> ""
+                                            rawDelay.all { it.isDigit() } -> "$rawDelay+"
+                                            else -> rawDelay
+                                        }
+
+                                        rawTrainList[i] = train.copy(
+                                            rfiDelay = if (delayDisplay.isEmpty() && !isCancelled) "0+" else delayDisplay,
+                                            rfiStatus = statusText
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    println("DEBUG: RFI-Monitor Cross-Check failed: ${e.message}")
+                }
+                // --------------------------------------
+
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

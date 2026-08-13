@@ -36,7 +36,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "TrainControlSTmobil"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.1"
             copyright = "© 2026 g.andi"
             description = "Zug-Anzeige Südtirol"
         }

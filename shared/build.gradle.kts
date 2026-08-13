@@ -33,8 +33,7 @@ kotlin {
         }
 
         jvmMain.dependencies {
-            // Den alten Jsoup-Parser kannst du löschen oder auskommentieren
-            // implementation(libs.jsoup)
+            implementation(libs.jsoup)
 
             // Hier fügst du den neuen Ktor-Client für die EFA-Schnittstelle ein:
             val ktorVersion = "2.3.8"

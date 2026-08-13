@@ -12,6 +12,8 @@ data class TrainInfo(
     val hasDelay: Boolean,
     val isBus: Boolean = false,
     val stopsAtTarget: Boolean? = null,
+    val rfiDelay: String? = null,
+    val rfiStatus: String? = null,
 )
 
 @Serializable
