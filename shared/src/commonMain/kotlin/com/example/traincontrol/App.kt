@@ -72,6 +72,7 @@ fun App() {
                 ) { selected ->
                     TrainState.departureStation = selected
                     settings.putString("home_station", selected.name)
+                    settings.putBoolean("is_app_configured", true)
 
                     // Wenn Ziel = Abfahrt, setze Ziel zurück
                     if (TrainState.targetStation?.name == selected.name) {
@@ -105,6 +106,7 @@ fun App() {
                 ) { selected ->
                     TrainState.targetStation = selected
                     settings.putString("work_station", selected.name)
+                    settings.putBoolean("is_app_configured", true)
 
                     // Wenn Abfahrt = Ziel, setze Abfahrt zurück
                     if (TrainState.departureStation?.name == selected.name) {
@@ -146,6 +148,7 @@ fun App() {
                             onCheckedChange = { isChecked ->
                                 runOnStartup = isChecked
                                 settings.putBoolean("run_on_startup", isChecked)
+                                settings.putBoolean("is_app_configured", true)
                                 setWindowsAutostart(isChecked)
                             },
                             colors = CheckboxDefaults.colors(checkedColor = southTyrolRed)
@@ -160,6 +163,7 @@ fun App() {
                             onCheckedChange = {
                                 isTimerActive = it
                                 settings.putBoolean("timer_active", it)
+                                settings.putBoolean("is_app_configured", true)
                             },
                             colors = CheckboxDefaults.colors(checkedColor = southTyrolRed)
                         )
@@ -262,6 +266,7 @@ fun App() {
                         settings.putBoolean("cat_fv_freccia", catFreccia)
                         settings.putBoolean("cat_fv_italo", catItalo)
                         settings.putBoolean("cat_fv_ic", catIc)
+                        settings.putBoolean("is_app_configured", true)
                         showSettingsDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = darkGray)
@@ -355,7 +360,10 @@ fun WeeklyTimerDialog(settings: Settings, southTyrolRed: Color, darkGray: Color,
         },
         confirmButton = {
             Button(
-                onClick = onDismiss,
+                onClick = {
+                    settings.putBoolean("is_app_configured", true)
+                    onDismiss()
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = darkGray)
             ) {
                 Text("Fertig")

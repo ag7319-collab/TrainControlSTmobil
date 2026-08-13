@@ -40,11 +40,12 @@ fun main() {
     }
 
     application {
-        var isWindowVisible by remember { mutableStateOf(value = false) }
+        val settings = remember { Settings() }
+        val isAppConfigured = remember { settings.getBoolean("is_app_configured", defaultValue = false) }
+        var isWindowVisible by remember { mutableStateOf(!isAppConfigured) }
 
-    val stationRepository = remember { StationRepository() }
-    val trainService = remember { TrainService() }
-    val settings = remember { Settings() }
+        val stationRepository = remember { StationRepository() }
+        val trainService = remember { TrainService() }
 
     // 1. Initialisierung und Start-Abruf direkt beim App-Start im Hintergrund
     LaunchedEffect(Unit) {
@@ -241,7 +242,11 @@ fun main() {
         onCloseRequest = { isWindowVisible = false },
         title = "Zug-Anzeige Südtirol",
         icon = appIcon,
-        state = rememberWindowState(width = 900.dp, height = 750.dp),
+        state = rememberWindowState(
+            placement = if (!isAppConfigured) WindowPlacement.Maximized else WindowPlacement.Floating,
+            width = 900.dp,
+            height = 750.dp
+        ),
         visible = isWindowVisible,
     ) {
         App()
