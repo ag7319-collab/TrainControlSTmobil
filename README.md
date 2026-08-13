@@ -25,7 +25,7 @@ Die App zieht die Daten von den Webseiten von [Südtirol Mobil](https://www.sued
    git clone https://github.com/ag7319-collab/TrainControlSTmobil.git
 2. Download der Portable Version (selbstextrahierendes Archiv) oder der installierbaren Version (MSI-Installer) hier:  
    [TrainControlSTmobil Releases](https://github.com/ag7319-collab/TrainControlSTmobil/releases/)  
-   *Die Portable Version entpackt sich in den Ordner TrainControlSTmobil unter Eigene Dateien und führt die App beim ersten Start aus. Es bedarf im Gegensatz zum MSI-Installer keiner Administratorenrechte.*
+   *Die portable Version schlägt zur Entpackung als Standardpfad den Ordner TrainControlSTmobil unter Eigene Dateien vor und führt die App beim ersten Start aus. Es bedarf im Gegensatz zum MSI-Installer keiner Administratorenrechte.*
 ## Tech Stack
 
 * **Sprache:** Kotlin
