@@ -480,13 +480,13 @@ fun TrainItem(train: TrainInfo) {
                 Text(train.categoryNumber, style = MaterialTheme.typography.titleMedium)
                 
                 // Der Endbahnhof des Zuges (wo die Linie endet)
-                Text("Fährt nach: ${train.lineTerminal ?: train.destination}", style = MaterialTheme.typography.bodyMedium)
+                Text("nach ${train.lineTerminal ?: train.destination}", style = MaterialTheme.typography.bodyMedium)
                 
                 // Dein persönliches Ziel, falls der Zug noch weiterfährt
                 if (train.lineTerminal != null && 
                     !train.lineTerminal.equals(train.destination, ignoreCase = true) &&
                     !train.lineTerminal.contains(train.destination.split("/").first().trim(), ignoreCase = true)) {
-                    Text("Zielbahnhof: ${train.destination}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC53030))
+                    Text("Ziel ${train.destination}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC53030))
                 }
                 
                 Text(if (train.isBus) "BUS" else "Gleis: ${train.platform}", style = MaterialTheme.typography.bodySmall)
