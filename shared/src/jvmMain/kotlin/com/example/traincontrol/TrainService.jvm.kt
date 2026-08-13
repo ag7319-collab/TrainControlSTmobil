@@ -71,7 +71,7 @@ actual class TrainService actual constructor() {
                 println("DEBUG: Response length=${responseStr.length}")
                 if (responseStr.length < 500) println("DEBUG: Response=$responseStr")
 
-                val root = json.parseToJsonElement(responseStr) as? JsonObject ?: continue
+                val root = (json.parseToJsonElement(responseStr) as? JsonObject) ?: continue
                 val tripResponse = root["tripResponse"] as? JsonObject
 
                 val trips = getAsList(root, "journey")
@@ -85,7 +85,7 @@ actual class TrainService actual constructor() {
                 println("DEBUG: Found ${trips.size} trips")
                 if (trips.isEmpty()) {
                     println("DEBUG: Raw root keys: ${root.keys}")
-                    if (tripResponse != null) println("DEBUG: Raw tripResponse keys: ${tripResponse.keys}")
+                    tripResponse?.let { println("DEBUG: Raw tripResponse keys: ${it.keys}") }
                 }
 
                 for (trip in trips) {
@@ -206,7 +206,7 @@ actual class TrainService actual constructor() {
                             hasDelay = hasDelay,
                             isBus = isBus,
                             stopsAtTarget = true,
-                        )
+                        ),
                     )
 
                     if (rawTrainList.size >= limit) break
@@ -221,15 +221,14 @@ actual class TrainService actual constructor() {
                                 .timeout(8000)
                                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                                 .get()
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             null
                         }
                     }
 
                     if (rfiDoc != null) {
                         val rfiRows = rfiDoc.select("tr")
-                        for (i in 0 until rawTrainList.size) {
-                            val train = rawTrainList[i]
+                        for ((i, train) in rawTrainList.withIndex()) {
                             val efaNum = train.categoryNumber.filter { it.isDigit() }
                             if (efaNum.isBlank()) continue
 
@@ -264,12 +263,13 @@ actual class TrainService actual constructor() {
 
                                         val delayDisplay = when {
                                             isCancelled -> ""
-                                            rawDelay.all { it.isDigit() } -> "$rawDelay+"
+                                            rawDelay.isBlank() || rawDelay == "0" -> "+0"
+                                            rawDelay.all { it.isDigit() } -> "+$rawDelay"
                                             else -> rawDelay
                                         }
 
                                         rawTrainList[i] = train.copy(
-                                            rfiDelay = if (delayDisplay.isEmpty() && !isCancelled) "0+" else delayDisplay,
+                                            rfiDelay = delayDisplay,
                                             rfiStatus = statusText
                                         )
                                     }

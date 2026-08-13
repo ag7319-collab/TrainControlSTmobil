@@ -445,7 +445,8 @@ fun StationDropdown(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.heightIn(max = 400.dp)
+            modifier = Modifier.heightIn(max = 400.dp),
+            containerColor = Color(0xFFF5F5F5) // Helles Grau (entspricht secondaryContainer/Hover)
         ) {
             filteredStations.forEach { station ->
                 DropdownMenuItem(
