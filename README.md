@@ -16,7 +16,7 @@ Also nichts Besonderes, aber für meinen Gebrauch reicht das vollkommen aus. Wer
 - Autostart: Aktivierung durch Checkbox um die App automatisch bei jedem Start im Hintergrund ausführen zu lassen.
 
 ## Datenquelle
-Die App zieht die Daten von den Webseiten von [Südtirol Mobil](https://www.suedtirolmobil.info), macht den Quervergleich über die Webseite der RFI Monitore - Anzeigetafeln z.B. für Brixen [RFI Monitor](https://iechub.rfi.it/ArriviPartenze/arrivalsdepartures/Monitor?placeId=738&arrivals=false). [viaggiatreno.it](http://www.viaggiatreno.it/infomobilita/index.jsp) konnte leider nicht verwendet werden, da die Sad-Züge fehlen.
+Die App zieht die Daten von den Webseiten von [Südtirol Mobil](https://www.suedtirolmobil.info), macht den Quervergleich über die Webseite der RFI Monitore - Anzeigetafeln z.B. für Brixen [RFI Monitor](https://iechub.rfi.it/ArriviPartenze/arrivalsdepartures/Monitor?placeId=738&arrivals=false). [Viaggiatreno.it](http://www.viaggiatreno.it/infomobilita/index.jsp) konnte leider nicht verwendet werden, da die Sad-Züge fehlen.
 
 ## Installation & Start
 
