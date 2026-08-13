@@ -56,7 +56,7 @@ fun App() {
                     Text(
                         text = "Zug-Anzeige Südtirol",
                         style = MaterialTheme.typography.headlineMedium,
-                        color = southTyrolRed
+                        color = southTyrolRed,
                     )
                     OutlinedButton(onClick = { showSettingsDialog = true }) {
                         Text("⚙️ Kategorien")
@@ -72,7 +72,7 @@ fun App() {
                 ) { selected ->
                     TrainState.departureStation = selected
                     settings.putString("home_station", selected.name)
-                    settings.putBoolean("is_app_configured", true)
+                    settings.putBoolean("is_app_configured", value = true)
 
                     // Wenn Ziel = Abfahrt, setze Ziel zurück
                     if (TrainState.targetStation?.name == selected.name) {
@@ -106,7 +106,7 @@ fun App() {
                 ) { selected ->
                     TrainState.targetStation = selected
                     settings.putString("work_station", selected.name)
-                    settings.putBoolean("is_app_configured", true)
+                    settings.putBoolean("is_app_configured", value = true)
 
                     // Wenn Abfahrt = Ziel, setze Abfahrt zurück
                     if (TrainState.departureStation?.name == selected.name) {
@@ -114,7 +114,7 @@ fun App() {
                     }
 
                     scope.launch {
-                        if (TrainState.departureStation != null && TrainState.targetStation != null) {
+                        if ((TrainState.departureStation != null) && (TrainState.targetStation != null)) {
                             try {
                                 TrainState.isLoading = true
                                 TrainState.trains = trainService.fetchAndParseTrains(TrainState.departureStation!!, TrainState.targetStation!!, settings, TrainState.stations)
@@ -148,7 +148,7 @@ fun App() {
                             onCheckedChange = { isChecked ->
                                 runOnStartup = isChecked
                                 settings.putBoolean("run_on_startup", isChecked)
-                                settings.putBoolean("is_app_configured", true)
+                                settings.putBoolean("is_app_configured", value = true)
                                 setWindowsAutostart(isChecked)
                             },
                             colors = CheckboxDefaults.colors(checkedColor = southTyrolRed)
@@ -163,7 +163,7 @@ fun App() {
                             onCheckedChange = {
                                 isTimerActive = it
                                 settings.putBoolean("timer_active", it)
-                                settings.putBoolean("is_app_configured", true)
+                                settings.putBoolean("is_app_configured", value = true)
                             },
                             colors = CheckboxDefaults.colors(checkedColor = southTyrolRed)
                         )
@@ -266,7 +266,7 @@ fun App() {
                         settings.putBoolean("cat_fv_freccia", catFreccia)
                         settings.putBoolean("cat_fv_italo", catItalo)
                         settings.putBoolean("cat_fv_ic", catIc)
-                        settings.putBoolean("is_app_configured", true)
+                        settings.putBoolean("is_app_configured", value = true)
                         showSettingsDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = darkGray)
@@ -298,7 +298,7 @@ fun WeeklyTimerDialog(settings: Settings, southTyrolRed: Color, darkGray: Color,
                 val defaultActive = (dayOfWeek != DayOfWeek.SATURDAY) && (dayOfWeek != DayOfWeek.SUNDAY)
                 settings.putBoolean("active_${dayOfWeek.name}", defaultActive)
             }
-            settings.putBoolean("initialized_days_v2", true)
+            settings.putBoolean("initialized_days_v2", value = true)
         }
     }
 
@@ -361,7 +361,7 @@ fun WeeklyTimerDialog(settings: Settings, southTyrolRed: Color, darkGray: Color,
         confirmButton = {
             Button(
                 onClick = {
-                    settings.putBoolean("is_app_configured", true)
+                    settings.putBoolean("is_app_configured", value = true)
                     onDismiss()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = darkGray)
@@ -478,7 +478,17 @@ fun TrainItem(train: TrainInfo) {
             // Links: Zug-Kategorie und Nummer
             Column(modifier = Modifier.weight(1f)) {
                 Text(train.categoryNumber, style = MaterialTheme.typography.titleMedium)
-                Text("Fährt nach: ${train.destination}", style = MaterialTheme.typography.bodyMedium)
+                
+                // Der Endbahnhof des Zuges (wo die Linie endet)
+                Text("Fährt nach: ${train.lineTerminal ?: train.destination}", style = MaterialTheme.typography.bodyMedium)
+                
+                // Dein persönliches Ziel, falls der Zug noch weiterfährt
+                if (train.lineTerminal != null && 
+                    !train.lineTerminal.equals(train.destination, ignoreCase = true) &&
+                    !train.lineTerminal.contains(train.destination.split("/").first().trim(), ignoreCase = true)) {
+                    Text("Zielbahnhof: ${train.destination}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC53030))
+                }
+                
                 Text(if (train.isBus) "BUS" else "Gleis: ${train.platform}", style = MaterialTheme.typography.bodySmall)
             }
 

@@ -134,7 +134,7 @@ actual class TrainService actual constructor() {
                         for (legObj in legs) {
                             val transp = (legObj["transportation"] as? JsonObject) ?: (legObj["mode"] as? JsonObject)
                             val tName = (transp?.get("name") as? JsonPrimitive)?.content ?: ""
-                            val isWalk = tName.contains("Fußweg", ignoreCase = true) || (legObj["isWalk"] as? JsonPrimitive)?.booleanOrNull == true
+                            val isWalk = (tName.contains("Fußweg", ignoreCase = true)) || (legObj["isWalk"] as? JsonPrimitive)?.booleanOrNull == true
                             if (isWalk) continue
 
                             val upper = tName.uppercase()
@@ -209,7 +209,11 @@ actual class TrainService actual constructor() {
                         if (originNode == null || transpNode == null) continue
 
                         val transpName = (transpNode["name"] as? JsonPrimitive)?.content ?: (transpNode["disassembledName"] as? JsonPrimitive)?.content ?: "Zug"
-                        val finalDest = ((transpNode["destination"] as? JsonObject)?.get("name") as? JsonPrimitive)?.content ?: targetStation.name
+                        
+                        val lineTerminal = ((transpNode["destination"] as? JsonObject)?.get("name") as? JsonPrimitive)?.content
+                            ?: (transpNode["destination"] as? JsonPrimitive)?.content
+                            ?: targetStation.name
+
                         val upperCat = transpName.uppercase()
                         val isBus = (upperCat.contains("BUS") || upperCat.contains("SAD") || upperCat.contains("SASA") || upperCat.contains("LINIE")) &&
                                 !upperCat.contains(" R ") && !upperCat.startsWith("R ") && !upperCat.contains("RV") && !upperCat.contains("RE ")
@@ -232,14 +236,15 @@ actual class TrainService actual constructor() {
                         rawTrainList.add(
                             TrainInfo(
                                 categoryNumber = transpName,
-                                destination = finalDest,
+                                destination = tripDestName.ifBlank { targetStation.name },
                                 time = planTime,
                                 delay = "pünktlich", 
                                 platform = (originNode["platformName"] as? JsonPrimitive)?.content ?: "-",
                                 hasDelay = false,
                                 isBus = isBus,
                                 stopsAtTarget = true,
-                            )
+                                lineTerminal = lineTerminal,
+                            ),
                         )
 
                         val idx = rawTrainList.size - 1
