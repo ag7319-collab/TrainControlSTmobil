@@ -1,7 +1,7 @@
 This is a Kotlin Multiplatform project targeting Desktop (JVM).
 
 # Zugmonitoring für Südtiroler Pendler
-Eine einfache Desktop-Anwendung, entwickelt mit **Kotlin** und **Jetpack Compose Desktop**, zur komfortablen Überwachung von Zugverbindungen, Abfahrtszeiten und Verspätungen im öffentlichen Nahverkehr (Bahnverkehr). Der Vinschgau ist leider ausgenommen, da dort die Echtzeidaten meines Wissens nur über südtirol mobil zugänglich sind. Der Wille war da... nur die Fähigkeit nicht.  
+Eine einfache Desktop-Anwendung, entwickelt mit **Kotlin** und **Jetpack Compose Desktop**, zur komfortablen Überwachung von Zugverbindungen, Abfahrtszeiten und Verspätungen im öffentlichen Nahverkehr (Bahnverkehr). Die App holt die Zugdaten von der Südtirol Mobil Webseite und macht einen Quervergleich mit der Webseite der RFI Anzeigetafeln.  
 
 ## Über das "Projekt"
 Gedacht ist die App für Südtiroler Bahn-Pendler, die täglich die gleichen Strecken zu bestimmten Zeiten fahren (z. B. in der Früh zur Arbeit und am Abend zurück). Die Anwendung prüft automatisch zu festgelegten Zeiten, ob z.B. die relevanten Züge in Richtung Heimat pünktlich sind, und nur im Falle von Unpünktlichkeit oder Ausfall erscheint eine Meldung auf dem Bildschirm. Ansonsten läuft die App absolut silent im Hintergrund in der Systemtray und öffnet sich nur durch Doppelklick auf das Symbol für etwaige Konfiguration oder spontanes Echtzeitmonitoring.
@@ -15,7 +15,7 @@ Also nichts Besonderes, aber für meinen Gebrauch reicht das vollkommen aus. Wer
 - Einfache Konfiguration: Per Doppelklick auf das App-Icon öffnen sich die Einstellungen, in denen Abfahrtsbahnhof, Zielbahnhof und die Prüfzeiten angepasst werden können.
 
 ## Datenquelle
-Die App zieht die Daten von den Webseiten der RFI Monitore - Anzeigetafeln z.B. für Brixen [RFI Monitor](https://iechub.rfi.it/ArriviPartenze/arrivalsdepartures/Monitor?placeId=738&arrivals=false), da auf [viaggiatreno.it](http://www.viaggiatreno.it/infomobilita/index.jsp) leider die Sad-Züge fehlen.
+Die App zieht die Daten von den Webseiten von [Südtirol Mobil](https://www.suedtirolmobil.info), macht den Quervergleich über die Webseite der RFI Monitore - Anzeigetafeln z.B. für Brixen [RFI Monitor](https://iechub.rfi.it/ArriviPartenze/arrivalsdepartures/Monitor?placeId=738&arrivals=false). [viaggiatreno.it](http://www.viaggiatreno.it/infomobilita/index.jsp) konnte leider nicht verwendet werden, da die Sad-Züge fehlen.
 
 ## Installation & Start
 
