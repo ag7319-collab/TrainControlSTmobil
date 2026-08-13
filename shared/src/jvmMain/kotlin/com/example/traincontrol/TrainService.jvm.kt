@@ -182,6 +182,10 @@ actual class TrainService actual constructor() {
                         val actualDeparture = calculateActualDepartureDateTime(planDate, planTime, realTime)
                         if (!actualDeparture.isAfter(now.minusMinutes(1))) continue
 
+                        // Filter: Züge, die mehr als 5 Stunden in der Zukunft liegen, ausblenden.
+                        // Das verhindert, dass spätabends bereits die Pendlerzüge von morgen früh angezeigt werden.
+                        if (actualDeparture.isAfter(now.plusHours(5))) continue
+
                         if (rawTrainList.any { it.categoryNumber == transpName && it.time == planTime }) continue
 
                         rawTrainList.add(
