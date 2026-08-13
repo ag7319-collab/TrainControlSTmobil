@@ -10,7 +10,7 @@ Also nichts Besonderes, aber für meinen Gebrauch reicht das vollkommen aus. Wer
 
 ## Hauptfunktionen
 - Hintergrundbetrieb: Die App läuft still und leise minimiert im System-Tray (neben der Uhr).
-- Automatischer Check: Zu frei konfigurierbaren Tagen und Zeiten wird geprüft, ob der nächstmögliche Zug oder ein darauffolgender Zug innerhalb der nächsten 15 Minuten in die selbe Richtung Verspätung hat oder ausfällt und gibt ein Popup und Alarmsignal (Beep) aus.
+- Automatischer Check: Zu frei konfigurierbaren Tagen und Zeiten wird geprüft, ob der nächstmögliche Zug oder ein darauffolgender Zug, welcher innerhalb der nächsten 15 Minuten in die selbe Richtung fährt, Verspätung hat oder ausfällt und gibt ein Popup und Alarmsignal (Beep) aus.
 - Schnellübersicht per Hover: Beim Überfahren des Tray-Symbols mit der Maus werden die nächsten 3 Züge inklusive ihrer Pünktlichkeit bzw. Verspätung angezeigt.
 - Einfache Konfiguration: Per Doppelklick auf das App-Icon öffnen sich die Einstellungen, in denen Abfahrtsbahnhof, Zielbahnhof und die Prüfzeiten angepasst werden können.
 - Autostart: Aktivierung durch Checkbox um die App automatisch bei jedem Start im Hintergrund ausführen zu lassen.
