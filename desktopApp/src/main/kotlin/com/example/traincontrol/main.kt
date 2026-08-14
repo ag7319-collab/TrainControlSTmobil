@@ -140,16 +140,34 @@ fun main() {
                             val secondTrain = TrainState.trains.getOrNull(1)
 
                             val hasIssue = { train: TrainInfo ->
-                                val text = train.delay.trim().lowercase()
-                                train.hasDelay || (text.isNotBlank() && (text != "0") && (text != "pünktlich") && (text != "in orario"))
+                                val efaText = train.delay.trim().lowercase()
+                                val efaIssue = train.hasDelay || (efaText.isNotBlank() && efaText != "0" && efaText != "pünktlich" && efaText != "in orario")
+                                
+                                val rfiText = train.rfiStatus?.trim()?.lowercase() ?: ""
+                                val rfiIssue = rfiText == "verspätung" || rfiText == "entfällt"
+                                
+                                efaIssue || rfiIssue
                             }
 
                             // Hilfsfunktion NUR für das Popup (fügt " Verspätung" an)
-                            val formatDelay = { text: String ->
-                                if (text.any { it.isDigit() } && !text.contains("Verspätung", ignoreCase = true)) {
-                                    "$text Verspätung"
+                            val getDelayText = { train: TrainInfo ->
+                                val efaText = train.delay.trim().lowercase()
+                                val efaIssue = train.hasDelay || (efaText.isNotBlank() && efaText != "0" && efaText != "pünktlich" && efaText != "in orario")
+                                
+                                if (efaIssue) {
+                                    val text = train.delay
+                                    if (text.any { it.isDigit() } && !text.contains("Verspätung", ignoreCase = true)) {
+                                        "$text Verspätung"
+                                    } else {
+                                        text
+                                    }
                                 } else {
-                                    text
+                                    val rfiText = train.rfiStatus?.trim()?.lowercase() ?: ""
+                                    if (rfiText == "verspätung" || rfiText == "entfällt") {
+                                        if (train.rfiDelay?.isNotBlank() == true) "${train.rfiDelay} (RFI)" else "${train.rfiStatus} (RFI)"
+                                    } else {
+                                        train.delay
+                                    }
                                 }
                             }
 
@@ -157,9 +175,9 @@ fun main() {
                                 var triggerPopup = false
                                 val messageBuilder = java.lang.StringBuilder()
 
-                                // 1. Zug prüfen (für das Popup mit formatDelay)
+                                // 1. Zug prüfen (für das Popup)
                                 if (hasIssue(firstTrain)) {
-                                    messageBuilder.append("• ${firstTrain.time} Uhr (Nr. ${firstTrain.categoryNumber}): ${formatDelay(firstTrain.delay)}\n")
+                                    messageBuilder.append("• ${firstTrain.time} Uhr (Nr. ${firstTrain.categoryNumber}): ${getDelayText(firstTrain)}\n")
                                     triggerPopup = true
                                 }
 
@@ -182,7 +200,7 @@ fun main() {
                                         val diff = totalMins2 - totalMins1
 
                                         if (diff <= 15 && hasIssue(secondTrain)) {
-                                            messageBuilder.append("• ${secondTrain.time} Uhr (Nr. ${secondTrain.categoryNumber}): ${formatDelay(secondTrain.delay)}\n")
+                                            messageBuilder.append("• ${secondTrain.time} Uhr (Nr. ${secondTrain.categoryNumber}): ${getDelayText(secondTrain)}\n")
                                             triggerPopup = true
                                         }
                                     }
@@ -191,9 +209,22 @@ fun main() {
                                 if (triggerPopup) {
                                     trainService.playDoubleBeep()
 
-                                    // Windows-Toast-Benachrichtigung: Nutzt direkt it.delay (OHNE den "Verspätung"-Zusatz)
+                                    // Windows-Toast-Benachrichtigung: Nutzt EFA-Delay oder RFI-Delay
                                     val fullMsg = TrainState.trains.joinToString("\n") {
-                                        "${it.time} | ${it.destination} | ${it.delay.ifBlank { "pünktlich" }}"
+                                        val efaText = it.delay.trim().lowercase()
+                                        val efaIssue = it.hasDelay || (efaText.isNotBlank() && efaText != "0" && efaText != "pünktlich" && efaText != "in orario")
+                                        
+                                        val status = if (efaIssue) {
+                                            it.delay
+                                        } else {
+                                            val rfiText = it.rfiStatus?.trim()?.lowercase() ?: ""
+                                            if (rfiText == "verspätung" || rfiText == "entfällt") {
+                                                if (it.rfiDelay?.isNotBlank() == true) "${it.rfiDelay} (RFI)" else "${it.rfiStatus} (RFI)"
+                                            } else {
+                                                it.delay.ifBlank { "pünktlich" }
+                                            }
+                                        }
+                                        "${it.time} | ${it.destination} | $status"
                                     }
                                     trainService.showNotification("Fahrplan-Meldung! ⚠️ ", fullMsg)
 

@@ -494,6 +494,9 @@ fun TrainItem(train: TrainInfo) {
 
             // Mitte: RFI Monitor (Gegencheck)
             if (train.rfiStatus != null || train.rfiDelay != null) {
+                val rfiHasIssue = train.rfiStatus == "Verspätung" || train.rfiStatus == "entfällt"
+                val rfiColor = if (rfiHasIssue) MaterialTheme.colorScheme.error else lightGray
+                
                 Column(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -501,17 +504,17 @@ fun TrainItem(train: TrainInfo) {
                     Text(
                         text = train.rfiDelay ?: "0+",
                         style = MaterialTheme.typography.bodySmall,
-                        color = lightGray
+                        color = rfiColor
                     )
                     Text(
                         text = "RFI-Monitor",
                         style = MaterialTheme.typography.labelSmall,
-                        color = lightGray
+                        color = rfiColor
                     )
                     Text(
                         text = train.rfiStatus ?: "pünktlich",
                         style = MaterialTheme.typography.bodySmall,
-                        color = lightGray
+                        color = rfiColor
                     )
                 }
             } else {
