@@ -509,7 +509,7 @@ fun TrainItem(train: TrainInfo) {
                     Text(
                         text = "RFI-Monitor",
                         style = MaterialTheme.typography.labelSmall,
-                        color = rfiColor
+                        color = lightGray
                     )
                     Text(
                         text = train.rfiStatus ?: "pünktlich",
