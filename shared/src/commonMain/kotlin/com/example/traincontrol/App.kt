@@ -441,7 +441,7 @@ fun StationDropdown(
     val filteredStations = remember(stations) {
         stations
             .asSequence()
-            .filter { (!it.placeId.startsWith("9900")) && (it.lat >= 46.0) }
+            .filter { (!it.placeId.startsWith("9900")) && (it.lat >= 46.0) && it.isSelectable }
             .sortedBy { it.name }
             .toList()
     }

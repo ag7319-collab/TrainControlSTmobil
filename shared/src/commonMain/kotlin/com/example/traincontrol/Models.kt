@@ -25,6 +25,7 @@ data class StationData(
     val lat: Double,
     val lon: Double,
     val aliases: List<String>,
+    val isSelectable: Boolean = true,
 )
 
 @Serializable
