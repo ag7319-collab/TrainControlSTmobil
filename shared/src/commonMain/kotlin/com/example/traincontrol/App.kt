@@ -1,5 +1,6 @@
 package com.example.traincontrol
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.CancellationException
 import java.io.File
 import java.time.DayOfWeek
@@ -40,11 +42,17 @@ fun App() {
         val to = TrainState.targetStation
 
         if ((from != null) && (to != null) && (from.name != to.name)) {
+            // Debounce: Wir warten kurz, falls der Nutzer gerade beide Bahnhöfe 
+            // schnell hintereinander umstellt (verhindert Race Conditions).
+            // Debounce: Wir warten kurz, falls der Nutzer gerade beide Bahnhöfe 
+            // schnell hintereinander umstellt (verhindert Race Conditions).
+            delay(400)
+            
             try {
                 TrainState.isLoading = true
                 TrainState.trains = trainService.fetchAndParseTrains(from, to, settings, TrainState.stations)
             } catch (e: CancellationException) {
-                // Compose bricht den Effect ab, wenn sich Keys ändern - das ist gewünscht.
+                // Das ist bei LaunchedEffect normal, wenn sich Keys ändern.
                 throw e
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -176,15 +184,24 @@ fun App() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (TrainState.isLoading) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (TrainState.trains.isNotEmpty()) {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            items(TrainState.trains) { train ->
+                                TrainItem(train)
+                                HorizontalDivider()
+                            }
+                        }
                     }
-                } else if (TrainState.trains.isNotEmpty()) {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(TrainState.trains) { train ->
-                            TrainItem(train)
-                            HorizontalDivider()
+
+                    if (TrainState.isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.White.copy(alpha = 0.6f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
                         }
                     }
                 }

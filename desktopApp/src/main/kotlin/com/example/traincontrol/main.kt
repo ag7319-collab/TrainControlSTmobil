@@ -56,25 +56,6 @@ fun main() {
                 val workName = settings.getString("work_station", "Bozen / Bolzano")
                 TrainState.departureStation = TrainState.stations.find { it.name == homeName } ?: TrainState.stations.first()
                 TrainState.targetStation = TrainState.stations.find { it.name == workName } ?: TrainState.stations.first()
-
-                if ((TrainState.departureStation != null) && (TrainState.targetStation != null) && (TrainState.departureStation != TrainState.targetStation)) {
-                    val fromAtStart = TrainState.departureStation
-                    val toAtStart = TrainState.targetStation
-                    
-                    TrainState.isLoading = true
-                    val results = trainService.fetchAndParseTrains(
-                        fromAtStart!!,
-                        toAtStart!!,
-                        settings,
-                        TrainState.stations,
-                    )
-                    
-                    // Nur aktualisieren, wenn der Nutzer nicht zwischendurch umgestellt hat
-                    if (TrainState.departureStation == fromAtStart && TrainState.targetStation == toAtStart) {
-                        TrainState.trains = results
-                    }
-                    TrainState.isLoading = false
-                }
             }
         } catch (e: CancellationException) {
             throw e
