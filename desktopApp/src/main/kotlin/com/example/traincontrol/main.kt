@@ -81,7 +81,19 @@ fun main() {
         if (TrainState.trains.isNotEmpty()) {
             val nextThree = TrainState.trains.take(3)
             val compactText = nextThree.joinToString(" | ") { train ->
-                val status = train.delay.ifBlank { "pünktlich" }
+                val efaText = train.delay.trim().lowercase()
+                val efaIssue = train.hasDelay || (efaText.isNotBlank() && efaText != "0" && efaText != "pünktlich" && efaText != "in orario")
+                
+                val status = if (efaIssue) {
+                    train.delay
+                } else {
+                    val rfiStatusText = train.rfiStatus?.trim()?.lowercase() ?: ""
+                    if (rfiStatusText == "verspätung" || rfiStatusText == "entfällt") {
+                        if (train.rfiDelay?.isNotBlank() == true) "${train.rfiDelay} (RFI)" else "${train.rfiStatus} (RFI)"
+                    } else {
+                        train.delay.ifBlank { "pünktlich" }
+                    }
+                }
                 "${train.time} to ${train.destination} ($status)"
             }
             AlarmState.trayTooltip = if (compactText.length > 120) compactText.take(117) + "..." else compactText
