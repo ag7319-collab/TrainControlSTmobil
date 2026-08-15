@@ -44,6 +44,7 @@ actual class TrainService actual constructor() {
         val rawTrainList = mutableListOf<TrainInfo>()
         val limit = 10
 
+        val allowBus = settings.getBoolean("cat_bus", defaultValue = false)
         val allowReg = settings.getBoolean("cat_reg", defaultValue = true)
         val allowRv = settings.getBoolean("cat_rv", defaultValue = true)
 
@@ -134,21 +135,27 @@ actual class TrainService actual constructor() {
                         for (legObj in legs) {
                             val transp = (legObj["transportation"] as? JsonObject) ?: (legObj["mode"] as? JsonObject)
                             val tName = (transp?.get("name") as? JsonPrimitive)?.content ?: ""
-                            val isWalk = (tName.contains("Fußweg", ignoreCase = true)) || (legObj["isWalk"] as? JsonPrimitive)?.booleanOrNull == true
+                            val isWalk = tName.contains("Fußweg", ignoreCase = true) || (legObj["isWalk"] as? JsonPrimitive)?.booleanOrNull == true
                             if (isWalk) continue
 
                             val upper = tName.uppercase()
-                            val isBus = (upper.contains("BUS") || upper.contains("SAD") || upper.contains("SASA") || upper.contains("LINIE")) &&
-                                    !upper.contains(" R ") && !upper.startsWith("R ") && !upper.contains("RV") && !upper.contains("RE ") && !upper.contains("EC") && !upper.contains("RJ")
+                            // Da die API durch inclMOT=0 reguläre Busse ohnehin blockiert,
+                            // sind alle Busse, die hier noch auftauchen, offizielle Ersatzbusse.
+                            // Wir fügen zur Sicherheit SAD/SASA als Notfall-Blocker hinzu, falls die API mal spinnt.
+                            val isRegularBus = upper.contains("SAD") || upper.contains("SASA") || upper.contains("LINIE")
+                            val isErsatzBus = upper.contains("BUS") || upper.contains("SEV") || upper.contains("SOSTITUTIVO")
 
                             val isTrenordOrRJ = upper.contains("RJ") || upper.contains("RAILJET") || upper.contains("EC")
                             val isFreccia = upper.contains("FRECCIA") || upper.contains("FR ")
                             val isItalo = upper.contains("ITALO")
                             val isIC = upper.contains("INTERCITY") || upper.contains("IC ")
                             val isRv = upper.contains("RV") || upper.contains("REGIONALE VELOCE")
-                            val isReg = !isBus && !isRv && !isTrenordOrRJ && !isFreccia && !isItalo && !isIC
+                            val isReg = !isRegularBus && !isErsatzBus && !isRv && !isTrenordOrRJ && !isFreccia && !isItalo && !isIC
 
-                            if (isBus || (isTrenordOrRJ && !allowTrenord) || (isFreccia && !allowFreccia) || (isItalo && !allowItalo) || (isIC && !allowIC) || (isRv && !allowRv) || (isReg && !allowReg)) {
+                            // Neue Logik:
+                            // - isRegularBus (z.B. API-Fehler) fliegt IMMER raus.
+                            // - isErsatzBus fliegt raus, wenn 'allowBus' (dein Haken) NICHT gesetzt ist.
+                            if (isRegularBus || (isErsatzBus && !allowBus) || (isTrenordOrRJ && !allowTrenord) || (isFreccia && !allowFreccia) || (isItalo && !allowItalo) || (isIC && !allowIC) || (isRv && !allowRv) || (isReg && !allowReg)) {
                                 tripBanned = true
                                 break
                             }
@@ -215,8 +222,8 @@ actual class TrainService actual constructor() {
                             ?: targetStation.name
 
                         val upperCat = transpName.uppercase()
-                        val isBus = (upperCat.contains("BUS") || upperCat.contains("SAD") || upperCat.contains("SASA") || upperCat.contains("LINIE")) &&
-                                !upperCat.contains(" R ") && !upperCat.startsWith("R ") && !upperCat.contains("RV") && !upperCat.contains("RE ")
+                        // Auch hier: Wenn "BUS" drin steht, ist es dank API-Filterung ein Ersatzbus
+                        val isErsatzBusMain = upperCat.contains("BUS") || upperCat.contains("SEV") || upperCat.contains("SOSTITUTIVO")
 
                         val planDate = extractDate(originNode, listOf("itdTime", "dateTime", "departureTimePlanned", "date")) ?: now.format(dateFormatter)
                         val planTime = extractTime(originNode, listOf("itdTime", "dateTime", "departureTimePlanned", "time"))
@@ -238,10 +245,10 @@ actual class TrainService actual constructor() {
                                 categoryNumber = transpName,
                                 destination = tripDestName.ifBlank { targetStation.name },
                                 time = planTime,
-                                delay = "pünktlich", 
+                                delay = "pünktlich",
                                 platform = (originNode["platformName"] as? JsonPrimitive)?.content ?: "-",
                                 hasDelay = false,
-                                isBus = isBus,
+                                isBus = isErsatzBusMain, // <--- Übergibt "true" an dein Frontend, wenn es ein Ersatzbus ist
                                 stopsAtTarget = true,
                                 lineTerminal = lineTerminal,
                             ),
@@ -729,9 +736,7 @@ actual class TrainService actual constructor() {
                             key == "itdRTTime"
                 )
 
-            if (time != null) {
-                return time
-            }
+            if (time != null) return time
         }
 
         /*

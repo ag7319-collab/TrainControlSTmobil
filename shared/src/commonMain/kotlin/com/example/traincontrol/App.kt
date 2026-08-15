@@ -10,14 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import com.russhwolf.settings.Settings
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 import java.io.File
 import java.time.DayOfWeek
 
 @Composable
 fun App() {
-    val scope = rememberCoroutineScope()
     val trainService = remember { TrainService() }
     val settings = remember { Settings() }
 
@@ -33,6 +31,30 @@ fun App() {
 
     var showSettingsDialog by remember { mutableStateOf(value = false) }
     var showWeeklyDialog by remember { mutableStateOf(value = false) }
+    var refreshTrigger by remember { mutableStateOf(0) }
+
+    // Zentrale Suche: Reagiert auf Bahnhof-Änderungen und den Refresh-Trigger.
+    // LaunchedEffect bricht automatisch die vorherige Suche ab, wenn sich ein Key ändert.
+    LaunchedEffect(TrainState.departureStation, TrainState.targetStation, refreshTrigger) {
+        val from = TrainState.departureStation
+        val to = TrainState.targetStation
+
+        if ((from != null) && (to != null) && (from.name != to.name)) {
+            try {
+                TrainState.isLoading = true
+                TrainState.trains = trainService.fetchAndParseTrains(from, to, settings, TrainState.stations)
+            } catch (e: CancellationException) {
+                // Compose bricht den Effect ab, wenn sich Keys ändern - das ist gewünscht.
+                throw e
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                TrainState.isLoading = false
+            }
+        } else {
+            TrainState.trains = emptyList()
+        }
+    }
 
     val southTyrolRed = Color(0xFFC53030)
     val darkGray = Color(0xFF333333)
@@ -68,7 +90,7 @@ fun App() {
                 // Abfahrts-Dropdown
                 StationDropdown(
                     stations = TrainState.stations,
-                    selected = TrainState.departureStation
+                    selected = TrainState.departureStation,
                 ) { selected ->
                     TrainState.departureStation = selected
                     settings.putString("home_station", selected.name)
@@ -77,23 +99,6 @@ fun App() {
                     // Wenn Ziel = Abfahrt, setze Ziel zurück
                     if (TrainState.targetStation?.name == selected.name) {
                         TrainState.targetStation = null
-                    }
-
-                    scope.launch {
-                        if ((TrainState.departureStation != null) && (TrainState.targetStation != null)) {
-                            try {
-                                TrainState.isLoading = true
-                                TrainState.trains = trainService.fetchAndParseTrains(TrainState.departureStation!!, TrainState.targetStation!!, settings, TrainState.stations)
-                            } catch (e: CancellationException) {
-                                throw e
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            } finally {
-                                TrainState.isLoading = false
-                            }
-                        } else {
-                            TrainState.trains = emptyList()
-                        }
                     }
                 }
 
@@ -111,23 +116,6 @@ fun App() {
                     // Wenn Abfahrt = Ziel, setze Abfahrt zurück
                     if (TrainState.departureStation?.name == selected.name) {
                         TrainState.departureStation = null
-                    }
-
-                    scope.launch {
-                        if ((TrainState.departureStation != null) && (TrainState.targetStation != null)) {
-                            try {
-                                TrainState.isLoading = true
-                                TrainState.trains = trainService.fetchAndParseTrains(TrainState.departureStation!!, TrainState.targetStation!!, settings, TrainState.stations)
-                            } catch (e: CancellationException) {
-                                throw e
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            } finally {
-                                TrainState.isLoading = false
-                            }
-                        } else {
-                            TrainState.trains = emptyList()
-                        }
                     }
                 }
 
@@ -179,25 +167,8 @@ fun App() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = {
-                        val from = TrainState.departureStation
-                        val to = TrainState.targetStation
-                        if ((from != null) && (to != null)) {
-                            scope.launch {
-                                try {
-                                    TrainState.isLoading = true
-                                    TrainState.trains = trainService.fetchAndParseTrains(from, to, settings, TrainState.stations)
-                                } catch (e: CancellationException) {
-                                    throw e
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                } finally {
-                                    TrainState.isLoading = false
-                                }
-                            }
-                        }
-                    },
-                    enabled = (!TrainState.isLoading) && (TrainState.departureStation != null) && (TrainState.targetStation != null),
+                    onClick = { refreshTrigger++ },
+                    enabled = (!TrainState.isLoading) && (TrainState.departureStation != null) && (TrainState.targetStation != null) && (TrainState.departureStation?.name != TrainState.targetStation?.name),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(if (TrainState.isLoading) "Suche läuft..." else "Züge jetzt suchen")

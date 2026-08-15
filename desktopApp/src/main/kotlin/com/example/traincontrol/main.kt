@@ -57,14 +57,22 @@ fun main() {
                 TrainState.departureStation = TrainState.stations.find { it.name == homeName } ?: TrainState.stations.first()
                 TrainState.targetStation = TrainState.stations.find { it.name == workName } ?: TrainState.stations.first()
 
-                if ((TrainState.departureStation != null) && (TrainState.targetStation != null)) {
+                if ((TrainState.departureStation != null) && (TrainState.targetStation != null) && (TrainState.departureStation != TrainState.targetStation)) {
+                    val fromAtStart = TrainState.departureStation
+                    val toAtStart = TrainState.targetStation
+                    
                     TrainState.isLoading = true
-                    TrainState.trains = trainService.fetchAndParseTrains(
-                        TrainState.departureStation!!,
-                        TrainState.targetStation!!,
+                    val results = trainService.fetchAndParseTrains(
+                        fromAtStart!!,
+                        toAtStart!!,
                         settings,
                         TrainState.stations,
                     )
+                    
+                    // Nur aktualisieren, wenn der Nutzer nicht zwischendurch umgestellt hat
+                    if (TrainState.departureStation == fromAtStart && TrainState.targetStation == toAtStart) {
+                        TrainState.trains = results
+                    }
                     TrainState.isLoading = false
                 }
             }
@@ -108,12 +116,21 @@ fun main() {
             while (true) {
                 delay(5.minutes)
                 try {
-                    TrainState.trains = trainService.fetchAndParseTrains(
-                        TrainState.departureStation!!,
-                        TrainState.targetStation!!,
-                        settings,
-                        TrainState.stations,
-                    )
+                    val fromAtStart = TrainState.departureStation
+                    val toAtStart = TrainState.targetStation
+                    
+                    if (fromAtStart != null && toAtStart != null && fromAtStart != toAtStart && !TrainState.isLoading) {
+                        val results = trainService.fetchAndParseTrains(
+                            fromAtStart,
+                            toAtStart,
+                            settings,
+                            TrainState.stations,
+                        )
+                        // Nur aktualisieren, wenn sich die Auswahl nicht geändert hat
+                        if (TrainState.departureStation == fromAtStart && TrainState.targetStation == toAtStart) {
+                            TrainState.trains = results
+                        }
+                    }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -139,14 +156,21 @@ fun main() {
 
                 // Alarm nur auslösen, wenn der heutige Tag aktiv ist und die Uhrzeit stimmt
                 if (isTodayActive && (String.format("%02d:%02d", now.hour, now.minute) == timeForToday.trim()) && (now.second < 5)) {
-                    if ((TrainState.departureStation != null) && (TrainState.targetStation != null)) {
+                    if ((TrainState.departureStation != null) && (TrainState.targetStation != null) && (TrainState.departureStation != TrainState.targetStation)) {
                         try {
-                            TrainState.trains = trainService.fetchAndParseTrains(
-                                TrainState.departureStation!!,
-                                TrainState.targetStation!!,
+                            val fromAtStart = TrainState.departureStation
+                            val toAtStart = TrainState.targetStation
+                            
+                            val results = trainService.fetchAndParseTrains(
+                                fromAtStart!!,
+                                toAtStart!!,
                                 settings,
                                 TrainState.stations,
                             )
+                            
+                            if (TrainState.departureStation == fromAtStart && TrainState.targetStation == toAtStart) {
+                                TrainState.trains = results
+                            }
 
                             val firstTrain = TrainState.trains.getOrNull(0)
                             val secondTrain = TrainState.trains.getOrNull(1)
@@ -288,7 +312,7 @@ fun main() {
         state = rememberWindowState(
             placement = if (!isAppConfigured) WindowPlacement.Maximized else WindowPlacement.Floating,
             width = 900.dp,
-            height = 750.dp
+            height = 750.dp,
         ),
         visible = isWindowVisible,
     ) {
