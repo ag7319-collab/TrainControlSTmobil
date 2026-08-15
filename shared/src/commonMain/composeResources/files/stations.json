@@ -37,7 +37,7 @@
     {"name":"Naturns / Naturno","placeId":"VB","efaId":"66000171","lat":46.6491,"lon":10.9991,"aliases":["NATURNS","NATURNO"],"isSelectable":true},
     {"name":"Plaus","placeId":"VB","efaId":"66000201","lat":46.6572,"lon":11.0417,"aliases":["PLAUS"],"isSelectable":true},
     {"name":"Rabland / Rablà","placeId":"VB","efaId":"66000203","lat":46.6644,"lon":11.0664,"aliases":["RABLAND","RABLA"],"isSelectable":true},
-    {"name":"Töll / Tel","placeId":"VB","efaId":"66000040","lat":46.6781,"lon":11.0933,"aliases":["TOELL","TEL"],"isSelectable":true},
+    {"name":"Töll / Tel","placeId":"VB","efaId":"66000205","lat":46.67676,"lon":11.08508,"aliases":["TOELL","TÖLL","TEL"],"isSelectable":true},
     {"name":"Algund / Lagundo","placeId":"VB","efaId":"66000206","lat":46.6806,"lon":11.1276,"aliases":["ALGUND","LAGUNDO"],"isSelectable":true},
     {"name":"Marling / Marlengo","placeId":"VB","efaId":"66002374","lat":46.6622,"lon":11.1444,"aliases":["MARLING","MARLENGO"],"isSelectable":true},
     {"name":"Waidbruck / Ponte Gardena","placeId":"2216","efaId":"66001092","lat":46.5989,"lon":11.5303,"aliases":["PONTE GARDENA","WAIDBRUCK","PONTE G.-LAION"]},
