@@ -71,7 +71,7 @@ fun main() {
             val nextThree = TrainState.trains.take(3)
             val compactText = nextThree.joinToString(" | ") { train ->
                 val efaText = train.delay.trim().lowercase()
-                val efaIssue = train.hasDelay || (efaText.isNotBlank() && efaText != "0" && efaText != "pünktlich" && efaText != "in orario")
+                val efaIssue = (train.hasDelay) || ((efaText.isNotBlank()) && (efaText != "0") && (efaText != "pünktlich") && (efaText != "in orario"))
                 
                 val status = if (efaIssue) {
                     train.delay
@@ -316,28 +316,28 @@ fun main() {
                     surface = androidx.compose.ui.graphics.Color.White,
                     background = androidx.compose.ui.graphics.Color.White,
                     surfaceVariant = androidx.compose.ui.graphics.Color.White,
-                )
+                ),
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.surface
+                    color = MaterialTheme.colorScheme.surface,
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                        ) {
                         Column {
                             Text(
                                 text = "Meldung für Züge nach ${TrainState.targetStation?.name}:",
                                 style = MaterialTheme.typography.titleLarge,
-                                color = androidx.compose.ui.graphics.Color(0xFFC53030)
+                                color = androidx.compose.ui.graphics.Color(0xFFC53030),
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = AlarmState.message,
-                                style = MaterialTheme.typography.bodyLarge
+                                style = MaterialTheme.typography.bodyLarge,
                             )
                         }
 

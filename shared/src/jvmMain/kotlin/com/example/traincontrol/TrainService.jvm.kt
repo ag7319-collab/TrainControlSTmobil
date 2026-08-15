@@ -135,15 +135,20 @@ actual class TrainService actual constructor() {
                         for (legObj in legs) {
                             val transp = (legObj["transportation"] as? JsonObject) ?: (legObj["mode"] as? JsonObject)
                             val tName = (transp?.get("name") as? JsonPrimitive)?.content ?: ""
-                            val isWalk = tName.contains("Fußweg", ignoreCase = true) || (legObj["isWalk"] as? JsonPrimitive)?.booleanOrNull == true
+                            val isWalk = (tName.contains("Fußweg", ignoreCase = true)) || ((legObj["isWalk"] as? JsonPrimitive)?.booleanOrNull == true)
                             if (isWalk) continue
 
                             val upper = tName.uppercase()
-                            // Da die API durch inclMOT=0 reguläre Busse ohnehin blockiert,
-                            // sind alle Busse, die hier noch auftauchen, offizielle Ersatzbusse.
-                            // Wir fügen zur Sicherheit SAD/SASA als Notfall-Blocker hinzu, falls die API mal spinnt.
-                            val isRegularBus = upper.contains("SAD") || upper.contains("SASA") || upper.contains("LINIE")
-                            val isErsatzBus = upper.contains("BUS") || upper.contains("SEV") || upper.contains("SOSTITUTIVO")
+
+                            // Regex sucht nach "BUS ", gefolgt von 1 bis 3 Ziffern und einer Wortgrenze (\b).
+                            // Trifft z.B. auf "BUS 310" oder "BUS 1" zu, aber nicht auf "BUS 17270".
+                            val isTarnBus = Regex(""".*BUS\s\d{1,3}\b.*""").matches(upper)
+
+                            // Wir fügen isTarnBus zu den regulären Bussen hinzu
+                            val isRegularBus = upper.contains("SAD") || upper.contains("SASA") || upper.contains("LINIE") || isTarnBus
+
+                            // Nur wenn es KEIN regulärer Bus ist, darf es als Ersatzbus gelten
+                            val isErsatzBus = (upper.contains("BUS") || upper.contains("SEV") || upper.contains("SOSTITUTIVO")) && !isRegularBus
 
                             val isTrenordOrRJ = upper.contains("RJ") || upper.contains("RAILJET") || upper.contains("EC")
                             val isFreccia = upper.contains("FRECCIA") || upper.contains("FR ")
@@ -152,9 +157,7 @@ actual class TrainService actual constructor() {
                             val isRv = upper.contains("RV") || upper.contains("REGIONALE VELOCE")
                             val isReg = !isRegularBus && !isErsatzBus && !isRv && !isTrenordOrRJ && !isFreccia && !isItalo && !isIC
 
-                            // Neue Logik:
-                            // - isRegularBus (z.B. API-Fehler) fliegt IMMER raus.
-                            // - isErsatzBus fliegt raus, wenn 'allowBus' (dein Haken) NICHT gesetzt ist.
+                            // Die Block-Bedingung bleibt identisch
                             if (isRegularBus || (isErsatzBus && !allowBus) || (isTrenordOrRJ && !allowTrenord) || (isFreccia && !allowFreccia) || (isItalo && !allowItalo) || (isIC && !allowIC) || (isRv && !allowRv) || (isReg && !allowReg)) {
                                 tripBanned = true
                                 break
@@ -177,7 +180,7 @@ actual class TrainService actual constructor() {
                         val vehicleLegs = legs.filter { leg ->
                             val legTransp = (leg["transportation"] as? JsonObject) ?: (leg["mode"] as? JsonObject)
                             val legName = (legTransp?.get("name") as? JsonPrimitive)?.content ?: ""
-                            val isWalk = legName.contains("Fußweg", ignoreCase = true) || (leg["isWalk"] as? JsonPrimitive)?.booleanOrNull == true
+                            val isWalk = (legName.contains("Fußweg", ignoreCase = true)) || ((leg["isWalk"] as? JsonPrimitive)?.booleanOrNull == true)
                             !isWalk
                         }
 
@@ -238,7 +241,7 @@ actual class TrainService actual constructor() {
                         // Das verhindert, dass spätabends bereits die Pendlerzüge von morgen früh angezeigt werden.
                         if (actualDeparture.isAfter(now.plusHours(5))) continue
 
-                        if (rawTrainList.any { it.categoryNumber == transpName && it.time == planTime }) continue
+                        if (rawTrainList.any { (it.categoryNumber == transpName) && (it.time == planTime) }) continue
 
                         rawTrainList.add(
                             TrainInfo(
@@ -298,7 +301,7 @@ actual class TrainService actual constructor() {
                                     .userAgent(
                                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
                                                 "AppleWebKit/537.36 (KHTML, like Gecko) " +
-                                                "Chrome/120.0.0.0 Safari/537.36"
+                                                "Chrome/120.0.0.0 Safari/537.36",
                                     )
                                     .get()
                             } catch (_: Exception) {
@@ -508,7 +511,7 @@ actual class TrainService actual constructor() {
     private fun calculateActualDepartureDateTime(
         planDate: String,
         planTime: String,
-        realTime: String?
+        realTime: String?,
     ): LocalDateTime {
 
         val dateFormatter =
@@ -535,11 +538,11 @@ actual class TrainService actual constructor() {
         var actualDate = date
 
         val plannedMinutes =
-            plannedTime.hour * 60 +
+            (plannedTime.hour * 60) +
                     plannedTime.minute
 
         val actualMinutes =
-            actualTime.hour * 60 +
+            (actualTime.hour * 60) +
                     actualTime.minute
 
         /*
@@ -576,7 +579,7 @@ actual class TrainService actual constructor() {
      * enthalten sind.
      */
     private fun parseLocalTime(
-        time: String?
+        time: String?,
     ): LocalTime? {
 
         if (time == null) {
@@ -599,7 +602,7 @@ actual class TrainService actual constructor() {
                 .toIntOrNull()
                 ?: return null
 
-        if (hour !in 0..23) {
+        if ((hour !in 0..23)) {
             return null
         }
 
@@ -615,7 +618,7 @@ actual class TrainService actual constructor() {
 
     private fun getAsList(
         node: JsonObject,
-        key: String
+        key: String,
     ): List<JsonObject> {
 
         val element =
@@ -642,7 +645,7 @@ actual class TrainService actual constructor() {
      */
     private fun extractDate(
         node: JsonObject,
-        keys: List<String>
+        keys: List<String>,
     ): String? {
 
         for (key in keys) {
@@ -667,9 +670,9 @@ actual class TrainService actual constructor() {
                         ?.padStart(2, '0')
 
                 if (
-                    y != null &&
-                    m != null &&
-                    d != null
+                    (y != null) &&
+                    (m != null) &&
+                    (d != null)
                 ) {
                     return "$y$m$d"
                 }
@@ -718,26 +721,15 @@ actual class TrainService actual constructor() {
      */
     private fun extractTime(
         node: JsonObject,
-        keys: List<String>
+        keys: List<String>,
     ): String? {
 
         /*
          * Zuerst die angegebenen Felder direkt versuchen.
          */
-        for (key in keys) {
-
-            val element =
-                node[key]
-
-            val time =
-                parseTimeFromElement(
-                    element,
-                    key == "rtTime" ||
-                            key == "itdRTTime"
-                )
-
-            if (time != null) return time
-        }
+        keys.firstNotNullOfOrNull { key ->
+            parseTimeFromElement(node[key], key == "rtTime" || key == "itdRTTime")
+        }?.let { return it }
 
         /*
          * Falls dateTime ein Objekt ist, darin
@@ -777,15 +769,7 @@ actual class TrainService actual constructor() {
                 }
 
             if (t != null) {
-
-                val match =
-                    Regex(
-                        """\b(\d{2}:\d{2})\b"""
-                    ).find(t)
-
-                if (match != null) {
-                    return match.value
-                }
+                return Regex("""\b(\d{2}:\d{2})\b""").find(t)?.value
             }
         }
 
@@ -857,15 +841,7 @@ actual class TrainService actual constructor() {
                 }
 
             if (t != null) {
-
-                val match =
-                    Regex(
-                        """\b(\d{2}:\d{2})\b"""
-                    ).find(t)
-
-                if (match != null) {
-                    return match.value
-                }
+                return Regex("""\b(\d{2}:\d{2})\b""").find(t)?.value
             }
 
         } else if (element is JsonPrimitive) {
@@ -969,19 +945,10 @@ actual class TrainService actual constructor() {
                 }
                     ?: points.firstOrNull()
 
-            val id =
-                (
-                        bestPoint?.get("stateless")
-                                as? JsonPrimitive
-                        )?.content
-                    ?: (
-                            bestPoint?.get("id")
-                                    as? JsonPrimitive
-                            )?.content
+            val id = (bestPoint?.get("stateless") as? JsonPrimitive)?.content
+                ?: (bestPoint?.get("id") as? JsonPrimitive)?.content
 
-            if (id != null) {
-                return id
-            }
+            if (id != null) return id
 
         } catch (e: Exception) {
             e.printStackTrace()

@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.CancellationException
+import kotlin.time.Duration.Companion.milliseconds
 import java.io.File
 import java.time.DayOfWeek
 
@@ -46,7 +47,7 @@ fun App() {
             // schnell hintereinander umstellt (verhindert Race Conditions).
             // Debounce: Wir warten kurz, falls der Nutzer gerade beide Bahnhöfe 
             // schnell hintereinander umstellt (verhindert Race Conditions).
-            delay(400)
+            delay(400.milliseconds)
             
             try {
                 TrainState.isLoading = true
@@ -115,7 +116,7 @@ fun App() {
                 // Ziel-Dropdown
                 StationDropdown(
                     stations = TrainState.stations,
-                    selected = TrainState.targetStation
+                    selected = TrainState.targetStation,
                 ) { selected ->
                     TrainState.targetStation = selected
                     settings.putString("work_station", selected.name)
@@ -135,7 +136,7 @@ fun App() {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         // 1. Checkbox: Autostart (zuerst)
@@ -147,7 +148,7 @@ fun App() {
                                 settings.putBoolean("is_app_configured", value = true)
                                 setWindowsAutostart(isChecked)
                             },
-                            colors = CheckboxDefaults.colors(checkedColor = southTyrolRed)
+                            colors = CheckboxDefaults.colors(checkedColor = southTyrolRed),
                         )
                         Text("Autostart")
 
@@ -161,7 +162,7 @@ fun App() {
                                 settings.putBoolean("timer_active", it)
                                 settings.putBoolean("is_app_configured", value = true)
                             },
-                            colors = CheckboxDefaults.colors(checkedColor = southTyrolRed)
+                            colors = CheckboxDefaults.colors(checkedColor = southTyrolRed),
                         )
                         Text("Geplantes automatisches Zugmonitoring")
                     }
@@ -177,7 +178,7 @@ fun App() {
                 Button(
                     onClick = { refreshTrigger++ },
                     enabled = (!TrainState.isLoading) && (TrainState.departureStation != null) && (TrainState.targetStation != null) && (TrainState.departureStation?.name != TrainState.targetStation?.name),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(if (TrainState.isLoading) "Suche läuft..." else "Züge jetzt suchen")
                 }
@@ -281,7 +282,7 @@ fun WeeklyTimerDialog(settings: Settings, southTyrolRed: Color, darkGray: Color,
     var editingDay by remember { mutableStateOf<DayOfWeek?>(null) }
 
     LaunchedEffect(Unit) {
-        if (!settings.getBoolean("initialized_days_v2", false)) {
+        if (!settings.getBoolean("initialized_days_v2", defaultValue = false)) {
             days.forEach { (dayOfWeek, _) ->
                 val defaultActive = (dayOfWeek != DayOfWeek.SATURDAY) && (dayOfWeek != DayOfWeek.SUNDAY)
                 settings.putBoolean("active_${dayOfWeek.name}", defaultActive)
@@ -320,7 +321,7 @@ fun WeeklyTimerDialog(settings: Settings, southTyrolRed: Color, darkGray: Color,
                                     isActive = it
                                     settings.putBoolean("active_${dayOfWeek.name}", it)
                                 },
-                                colors = CheckboxDefaults.colors(checkedColor = southTyrolRed)
+                                colors = CheckboxDefaults.colors(checkedColor = southTyrolRed),
                             )
                             Text(dayName, modifier = Modifier.width(90.dp))
                         }
@@ -471,9 +472,9 @@ fun TrainItem(train: TrainInfo) {
                 Text("nach ${train.lineTerminal ?: train.destination}", style = MaterialTheme.typography.bodyMedium)
                 
                 // Dein persönliches Ziel, falls der Zug noch weiterfährt
-                if (train.lineTerminal != null && 
-                    !train.lineTerminal.equals(train.destination, ignoreCase = true) &&
-                    !train.lineTerminal.contains(train.destination.split("/").first().trim(), ignoreCase = true)) {
+                if ((train.lineTerminal != null) && 
+                    (!train.lineTerminal.equals(train.destination, ignoreCase = true)) &&
+                    (!train.lineTerminal.contains(train.destination.split("/").first().trim(), ignoreCase = true))) {
                     Text("Ziel ${train.destination}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC53030))
                 }
                 
@@ -481,8 +482,8 @@ fun TrainItem(train: TrainInfo) {
             }
 
             // Mitte: RFI Monitor (Gegencheck)
-            if (train.rfiStatus != null || train.rfiDelay != null) {
-                val rfiHasIssue = train.rfiStatus == "Verspätung" || train.rfiStatus == "entfällt"
+            if ((train.rfiStatus != null) || (train.rfiDelay != null)) {
+                val rfiHasIssue = (train.rfiStatus == "Verspätung") || (train.rfiStatus == "entfällt")
                 val rfiColor = if (rfiHasIssue) MaterialTheme.colorScheme.error else lightGray
                 
                 Column(
