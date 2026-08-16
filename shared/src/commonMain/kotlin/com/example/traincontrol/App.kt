@@ -381,7 +381,19 @@ fun TimePickerDialog(initialTime: String, onDismiss: () -> Unit, onConfirm: (Str
         containerColor = Color.White,
         text = {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                TimePicker(state = timePickerState)
+                TimePicker(
+                    state = timePickerState,
+                    colors = TimePickerDefaults.colors(
+                        clockDialColor = Color(0xFFEAEAEA),
+                        clockDialSelectedContentColor = Color.White,
+                        clockDialUnselectedContentColor = darkGray,
+                        selectorColor = Color(0xFFC53030),
+                        timeSelectorSelectedContainerColor = Color(0xFFC53030).copy(alpha = 0.15f),
+                        timeSelectorUnselectedContainerColor = Color(0xFFEAEAEA),
+                        timeSelectorSelectedContentColor = Color(0xFFC53030),
+                        timeSelectorUnselectedContentColor = darkGray
+                    )
+                )
             }
         },
         confirmButton = {
