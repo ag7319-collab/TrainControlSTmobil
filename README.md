@@ -32,6 +32,6 @@ Die App zieht die Daten von den Webseiten von [Südtirol Mobil](https://www.sued
 * **Persistenz:** Multiplatform Settings (`com.russhwolf:settings`)
 * **Asynchronität:** Kotlin Coroutines  
     
-Warum Kotlin? Weil ich das "Projekt" ursprünglich als Android-App gestartet hatte und durch Kotlin die Umwandlung in eine Desktop-App recht einfach war. Thats it.
+Warum Kotlin? Weil ich das "Projekt" ursprünglich als Android-App gestartet hatte und durch Kotlin die Umwandlung in eine Desktop-App recht einfach war. Thats it. Diese App arbeitet ganz nach dem "Set and Forget"-Prinzip, einmal eingerichtet braucht man sich nicht mehr darum kümmern. 
 
 Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
