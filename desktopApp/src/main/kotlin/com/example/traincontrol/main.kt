@@ -69,7 +69,7 @@ fun main() {
     LaunchedEffect(TrainState.trains) {
         if (TrainState.trains.isNotEmpty()) {
             val nextThree = TrainState.trains.take(3)
-            val compactText = nextThree.joinToString(" | ") { train ->
+            val compactText = nextThree.joinToString("\n") { train ->
                 val efaText = train.delay.trim().lowercase()
                 val efaIssue = (train.hasDelay) || ((efaText.isNotBlank()) && (efaText != "0") && (efaText != "pünktlich") && (efaText != "in orario"))
                 
@@ -80,10 +80,12 @@ fun main() {
                     if (rfiStatusText == "verspätung" || rfiStatusText == "entfällt") {
                         if (train.rfiDelay?.isNotBlank() == true) "${train.rfiDelay} (RFI)" else "${train.rfiStatus} (RFI)"
                     } else {
-                        train.delay.ifBlank { "pünktlich" }
+                        "pünktlich"
                     }
                 }
-                "${train.time} to ${train.destination} ($status)"
+                
+                val cleanDest = train.destination.split("/").first().trim()
+                "${train.time} -> $cleanDest ($status)"
             }
             AlarmState.trayTooltip = if (compactText.length > 120) compactText.take(117) + "..." else compactText
         } else {
