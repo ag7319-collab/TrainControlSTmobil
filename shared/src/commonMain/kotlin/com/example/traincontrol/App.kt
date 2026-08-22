@@ -1,6 +1,5 @@
 package com.example.traincontrol
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -43,8 +42,6 @@ fun App() {
         val to = TrainState.targetStation
 
         if ((from != null) && (to != null) && (from.name != to.name)) {
-            // Debounce: Wir warten kurz, falls der Nutzer gerade beide Bahnhöfe 
-            // schnell hintereinander umstellt (verhindert Race Conditions).
             // Debounce: Wir warten kurz, falls der Nutzer gerade beide Bahnhöfe 
             // schnell hintereinander umstellt (verhindert Race Conditions).
             delay(400.milliseconds)
@@ -185,24 +182,15 @@ fun App() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (TrainState.trains.isNotEmpty()) {
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            items(TrainState.trains) { train ->
-                                TrainItem(train)
-                                HorizontalDivider()
-                            }
-                        }
+                if (TrainState.isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
-
-                    if (TrainState.isLoading) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White.copy(alpha = 0.6f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
+                } else if (TrainState.trains.isNotEmpty()) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(TrainState.trains) { train ->
+                            TrainItem(train)
+                            HorizontalDivider()
                         }
                     }
                 }
@@ -230,7 +218,7 @@ fun App() {
             title = {
                 Text(
                     text = "Zugkategorien filtern",
-                    color = southTyrolRed
+                    color = southTyrolRed,
                 )
             },
             containerColor = Color.White,
@@ -258,7 +246,7 @@ fun App() {
                         settings.putBoolean("is_app_configured", value = true)
                         showSettingsDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = darkGray)
+                    colors = ButtonDefaults.buttonColors(containerColor = darkGray),
                 ) {
                     Text("Speichern")
                 }
@@ -551,11 +539,11 @@ fun setWindowsAutostart(enable: Boolean) {
                 ?: File(System.getProperty("user.dir"), "TrainControlSTmobil.exe").absolutePath
 
             if (enable) {
-                val psScript = $$"""
-                    $WshShell = New-Object -comObject WScript.Shell;
-                    $Shortcut = $WshShell.CreateShortcut('$${shortcutFile.absolutePath}');
-                    $Shortcut.TargetPath = '$$appPath';
-                    $Shortcut.Save();
+                val psScript = """
+                    ${'$'}WshShell = New-Object -comObject WScript.Shell;
+                    ${'$'}Shortcut = ${'$'}WshShell.CreateShortcut('${shortcutFile.absolutePath}');
+                    ${'$'}Shortcut.TargetPath = '$appPath';
+                    ${'$'}Shortcut.Save();
                 """.trimIndent()
 
                 val process = ProcessBuilder("powershell.exe", "-Command", psScript).start()
