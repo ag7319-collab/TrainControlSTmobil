@@ -77,8 +77,12 @@ fun main() {
                     train.delay
                 } else {
                     val rfiStatusText = train.rfiStatus?.trim()?.lowercase() ?: ""
+                    val vtStatusText = train.vtStatus?.trim()?.lowercase() ?: ""
+                    
                     if (rfiStatusText == "verspätung" || rfiStatusText == "entfällt") {
                         if (train.rfiDelay?.isNotBlank() == true) "${train.rfiDelay} (RFI)" else "${train.rfiStatus} (RFI)"
+                    } else if (vtStatusText == "verspätung" || vtStatusText == "entfällt") {
+                        if (train.vtDelay?.isNotBlank() == true) "${train.vtDelay} (VT)" else "${train.vtStatus} (VT)"
                     } else {
                         "pünktlich"
                     }
@@ -164,8 +168,11 @@ fun main() {
                                 
                                 val rfiText = train.rfiStatus?.trim()?.lowercase() ?: ""
                                 val rfiIssue = rfiText == "verspätung" || rfiText == "entfällt"
+
+                                val vtText = train.vtStatus?.trim()?.lowercase() ?: ""
+                                val vtIssue = vtText == "verspätung" || vtText == "entfällt"
                                 
-                                efaIssue || rfiIssue
+                                efaIssue || rfiIssue || vtIssue
                             }
 
                             // Hilfsfunktion NUR für das Popup (fügt " Verspätung" an)
@@ -182,8 +189,12 @@ fun main() {
                                     }
                                 } else {
                                     val rfiText = train.rfiStatus?.trim()?.lowercase() ?: ""
+                                    val vtText = train.vtStatus?.trim()?.lowercase() ?: ""
+                                    
                                     if (rfiText == "verspätung" || rfiText == "entfällt") {
                                         if (train.rfiDelay?.isNotBlank() == true) "${train.rfiDelay} (RFI)" else "${train.rfiStatus} (RFI)"
+                                    } else if (vtText == "verspätung" || vtText == "entfällt") {
+                                        if (train.vtDelay?.isNotBlank() == true) "${train.vtDelay} (VT)" else "${train.vtStatus} (VT)"
                                     } else {
                                         train.delay
                                     }
@@ -237,8 +248,12 @@ fun main() {
                                             it.delay
                                         } else {
                                             val rfiText = it.rfiStatus?.trim()?.lowercase() ?: ""
+                                            val vtText = it.vtStatus?.trim()?.lowercase() ?: ""
+                                            
                                             if (rfiText == "verspätung" || rfiText == "entfällt") {
                                                 if (it.rfiDelay?.isNotBlank() == true) "${it.rfiDelay} (RFI)" else "${it.rfiStatus} (RFI)"
+                                            } else if (vtText == "verspätung" || vtText == "entfällt") {
+                                                if (it.vtDelay?.isNotBlank() == true) "${it.vtDelay} (VT)" else "${it.vtStatus} (VT) "
                                             } else {
                                                 it.delay.ifBlank { "pünktlich" }
                                             }

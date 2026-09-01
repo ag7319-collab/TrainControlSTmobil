@@ -481,33 +481,67 @@ fun TrainItem(train: TrainInfo) {
                 Text(if (train.isBus) "BUS" else "Gleis: ${train.platform}", style = MaterialTheme.typography.bodySmall)
             }
 
-            // Mitte: RFI Monitor (Gegencheck)
-            if ((train.rfiStatus != null) || (train.rfiDelay != null)) {
-                val rfiHasIssue = (train.rfiStatus == "Verspätung") || (train.rfiStatus == "entfällt")
-                val rfiColor = if (rfiHasIssue) MaterialTheme.colorScheme.error else lightGray
-                
-                Column(
+            // Mitte: RFI & Viaggiatreno (Gegencheck)
+            if ((train.rfiStatus != null) || (train.rfiDelay != null) || (train.vtStatus != null) || (train.vtDelay != null)) {
+                Row(
                     modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = train.rfiDelay ?: "0+",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = rfiColor
-                    )
-                    Text(
-                        text = "RFI-Monitor",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = lightGray
-                    )
-                    Text(
-                        text = train.rfiStatus ?: "pünktlich",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = rfiColor
-                    )
+                    // RFI Spalte
+                    if ((train.rfiStatus != null) || (train.rfiDelay != null)) {
+                        val rfiHasIssue = (train.rfiStatus == "Verspätung") || (train.rfiStatus == "entfällt")
+                        val rfiColor = if (rfiHasIssue) MaterialTheme.colorScheme.error else lightGray
+                        
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = train.rfiDelay ?: "+0",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = rfiColor
+                            )
+                            Text(
+                                text = "RFI-Anzeigetafel",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = lightGray
+                            )
+                            Text(
+                                text = train.rfiStatus ?: "pünktlich",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = rfiColor
+                            )
+                        }
+                    }
+
+                    if (((train.rfiStatus != null) || (train.rfiDelay != null)) && ((train.vtStatus != null) || (train.vtDelay != null))) {
+                        Spacer(modifier = Modifier.width(32.dp))
+                    }
+
+                    // VT Spalte
+                    if ((train.vtStatus != null) || (train.vtDelay != null)) {
+                        val vtHasIssue = (train.vtStatus == "Verspätung") || (train.vtStatus == "entfällt")
+                        val vtColor = if (vtHasIssue) MaterialTheme.colorScheme.error else lightGray
+                        
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = train.vtDelay ?: "+0",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = vtColor
+                            )
+                            Text(
+                                text = "VT-Viaggiatreno",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = lightGray
+                            )
+                            Text(
+                                text = train.vtStatus ?: "pünktlich",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = vtColor
+                            )
+                        }
+                    }
                 }
             } else {
-                // Spacer um die Mitte leer zu halten falls kein RFI Match
+                // Spacer um die Mitte leer zu halten falls kein Match
                 Box(modifier = Modifier.weight(1f))
             }
 
