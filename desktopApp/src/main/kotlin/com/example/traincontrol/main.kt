@@ -79,9 +79,9 @@ fun main() {
                     val rfiStatusText = train.rfiStatus?.trim()?.lowercase() ?: ""
                     val vtStatusText = train.vtStatus?.trim()?.lowercase() ?: ""
                     
-                    if (rfiStatusText == "verspätung" || rfiStatusText == "entfällt") {
+                    if ((rfiStatusText == "verspätung") || (rfiStatusText == "entfällt")) {
                         if (train.rfiDelay?.isNotBlank() == true) "${train.rfiDelay} (RFI)" else "${train.rfiStatus} (RFI)"
-                    } else if (vtStatusText == "verspätung" || vtStatusText == "entfällt") {
+                    } else if ((vtStatusText == "verspätung") || (vtStatusText == "entfällt")) {
                         if (train.vtDelay?.isNotBlank() == true) "${train.vtDelay} (VT)" else "${train.vtStatus} (VT)"
                     } else {
                         "pünktlich"
@@ -162,25 +162,11 @@ fun main() {
                             val firstTrain = TrainState.trains.getOrNull(0)
                             val secondTrain = TrainState.trains.getOrNull(1)
 
-                            val hasIssue = { train: TrainInfo ->
-                                val efaText = train.delay.trim().lowercase()
-                                val efaIssue = train.hasDelay || (efaText.isNotBlank() && efaText != "0" && efaText != "pünktlich" && efaText != "in orario")
-                                
-                                val rfiText = train.rfiStatus?.trim()?.lowercase() ?: ""
-                                val rfiIssue = rfiText == "verspätung" || rfiText == "entfällt"
-
-                                val vtText = train.vtStatus?.trim()?.lowercase() ?: ""
-                                val vtIssue = vtText == "verspätung" || vtText == "entfällt"
-                                
-                                efaIssue || rfiIssue || vtIssue
-                            }
+                            val hasIssue = { train: TrainInfo -> train.hasAnyIssue }
 
                             // Hilfsfunktion NUR für das Popup (fügt " Verspätung" an)
                             val getDelayText = { train: TrainInfo ->
-                                val efaText = train.delay.trim().lowercase()
-                                val efaIssue = train.hasDelay || (efaText.isNotBlank() && efaText != "0" && efaText != "pünktlich" && efaText != "in orario")
-                                
-                                if (efaIssue) {
+                                if (train.hasDelay || train.delay == "entfällt") {
                                     val text = train.delay
                                     if (text.any { it.isDigit() } && !text.contains("Verspätung", ignoreCase = true)) {
                                         "$text Verspätung"
@@ -188,12 +174,9 @@ fun main() {
                                         text
                                     }
                                 } else {
-                                    val rfiText = train.rfiStatus?.trim()?.lowercase() ?: ""
-                                    val vtText = train.vtStatus?.trim()?.lowercase() ?: ""
-                                    
-                                    if (rfiText == "verspätung" || rfiText == "entfällt") {
+                                    if (train.rfiStatus == "entfällt" || train.rfiStatus == "Verspätung") {
                                         if (train.rfiDelay?.isNotBlank() == true) "${train.rfiDelay} (RFI)" else "${train.rfiStatus} (RFI)"
-                                    } else if (vtText == "verspätung" || vtText == "entfällt") {
+                                    } else if (train.vtStatus == "entfällt" || train.vtStatus == "Verspätung") {
                                         if (train.vtDelay?.isNotBlank() == true) "${train.vtDelay} (VT)" else "${train.vtStatus} (VT)"
                                     } else {
                                         train.delay
@@ -360,7 +343,7 @@ fun main() {
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
+                            horizontalArrangement = Arrangement.End,
                         ) {
                             Button(
                                 onClick = { AlarmState.isVisible = false },

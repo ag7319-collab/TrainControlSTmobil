@@ -263,8 +263,10 @@ actual class TrainService actual constructor() {
                                 var rTotal = actualTime.hour * 60 + actualTime.minute
                                 if (rTotal < pTotal && (pTotal - rTotal) > 720) rTotal += 1440
                                 val delayMins = rTotal - pTotal
-                                if (delayMins > 0) {
+                                if (delayMins >= 6) {
                                     rawTrainList[idx] = rawTrainList[idx].copy(delay = "+$delayMins Min.", hasDelay = true)
+                                } else if (delayMins > 0) {
+                                    rawTrainList[idx] = rawTrainList[idx].copy(delay = "+$delayMins Min.", hasDelay = false)
                                 }
                             }
                         }
@@ -399,17 +401,19 @@ actual class TrainService actual constructor() {
                                                             ignoreCase = true
                                                         )
 
+                                        val rawDelayMins = rawDelay.filter { it.isDigit() }.toIntOrNull() ?: 0
+                                        val isEarly = rawDelay.contains("-")
+
                                         val statusText =
                                             when {
                                                 isCancelled ->
                                                     "entfällt"
 
-                                                rawDelay.isBlank() ||
-                                                        rawDelay == "0" ->
-                                                    "pünktlich"
+                                                !isEarly && rawDelayMins >= 6 ->
+                                                    "Verspätung"
 
                                                 else ->
-                                                    "Verspätung"
+                                                    "pünktlich"
                                             }
 
                                         val delayDisplay =
@@ -1126,7 +1130,7 @@ actual class TrainService actual constructor() {
                             return train.copy(vtStatus = "entfällt", vtDelay = "")
                         } else if (ritardo != -999) {
                             val vtDisplay = if (ritardo >= 0) "+$ritardo" else ritardo.toString()
-                            val vtStatus = if (ritardo > 0) "Verspätung" else "pünktlich"
+                            val vtStatus = if (ritardo >= 6) "Verspätung" else "pünktlich"
                             return train.copy(vtDelay = vtDisplay, vtStatus = vtStatus)
                         }
                     }

@@ -17,7 +17,22 @@ data class TrainInfo(
     val vtDelay: String? = null,
     val vtStatus: String? = null,
     val lineTerminal: String? = null,
-)
+) {
+    val isCancelled: Boolean
+        get() = (delay == "entfällt") || (rfiStatus == "entfällt") || (vtStatus == "entfällt")
+
+    val maxDelayMinutes: Int
+        get() {
+            fun parse(s: String?): Int {
+                if (s == null || s.contains("-")) return 0
+                return s.filter { it.isDigit() }.toIntOrNull() ?: 0
+            }
+            return maxOf(parse(delay), maxOf(parse(rfiDelay), parse(vtDelay)))
+        }
+
+    val hasAnyIssue: Boolean
+        get() = isCancelled || maxDelayMinutes >= 6
+}
 
 @Serializable
 data class StationData(
