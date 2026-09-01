@@ -333,7 +333,7 @@ actual class TrainService actual constructor() {
                                         row.text()
 
                                     rowText.contains(
-                                        efaNum
+                                        efaNum,
                                     )
                                 }
 
