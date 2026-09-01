@@ -14,6 +14,8 @@ data class TrainInfo(
     val stopsAtTarget: Boolean? = null,
     val rfiDelay: String? = null,
     val rfiStatus: String? = null,
+    val vtDelay: String? = null,
+    val vtStatus: String? = null,
     val lineTerminal: String? = null,
 )
 

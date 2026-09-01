@@ -4,10 +4,7 @@ package com.example.traincontrol
 
 import kotlin.ExperimentalMultiplatform
 import com.russhwolf.settings.Settings
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -216,7 +213,7 @@ actual class TrainService actual constructor() {
                         val originNode = (mainLeg["origin"] as? JsonObject) ?: points.firstOrNull { ((it["usage"] as? JsonPrimitive)?.content == "departure") } ?: points.firstOrNull()
                         val transpNode = (mainLeg["transportation"] as? JsonObject) ?: (mainLeg["mode"] as? JsonObject)
 
-                        if (originNode == null || transpNode == null) continue
+                        if ((originNode == null) || (transpNode == null)) continue
 
                         val transpName = (transpNode["name"] as? JsonPrimitive)?.content ?: (transpNode["disassembledName"] as? JsonPrimitive)?.content ?: "Zug"
                         
@@ -447,11 +444,29 @@ actual class TrainService actual constructor() {
                     }
 
                 } catch (e: Exception) {
-
                     println(
                         "DEBUG: RFI-Monitor Cross-Check failed: " +
                                 e.message
                     )
+                }
+
+                /*
+                 * =========================================================
+                 * VIAGGIATRENO GEGENCHECK
+                 * =========================================================
+                 */
+                try {
+                    val updatedTrains = coroutineScope {
+                        rawTrainList.map { train ->
+                            async {
+                                fetchViaggiaTrenoUpdate(train)
+                            }
+                        }.awaitAll()
+                    }
+                    rawTrainList.clear()
+                    rawTrainList.addAll(updatedTrains)
+                } catch (e: Exception) {
+                    println("DEBUG: VT Cross-Check failed: ${e.message}")
                 }
 
                 // ---------------------------------------------------------
@@ -988,7 +1003,7 @@ actual class TrainService actual constructor() {
 
     actual fun showNotification(
         title: String,
-        message: String
+        message: String,
     ) {
 
         if (SystemTray.isSupported()) {
@@ -1004,7 +1019,7 @@ actual class TrainService actual constructor() {
                         BufferedImage(
                             16,
                             16,
-                            BufferedImage.TYPE_INT_ARGB
+                            BufferedImage.TYPE_INT_ARGB,
                         )
 
                     val g =
@@ -1014,14 +1029,14 @@ actual class TrainService actual constructor() {
                         Color(
                             60,
                             105,
-                            190
+                            190,
                         )
 
                     g.fillRect(
                         0,
                         0,
                         16,
-                        16
+                        16,
                     )
 
                     g.dispose()
@@ -1029,26 +1044,26 @@ actual class TrainService actual constructor() {
                     val trayIcon =
                         TrayIcon(
                             image,
-                            "Zug-Anzeige Südtirol"
+                            "Zug-Anzeige Südtirol",
                         )
 
                     trayIcon.isImageAutoSize =
                         true
 
                     tray.add(
-                        trayIcon
+                        trayIcon,
                     )
 
                     trayIcon.displayMessage(
                         title,
                         message,
-                        TrayIcon.MessageType.WARNING
+                        TrayIcon.MessageType.WARNING,
                     )
 
                     Thread.sleep(6000)
 
                     tray.remove(
-                        trayIcon
+                        trayIcon,
                     )
 
                 } catch (e: Exception) {
@@ -1056,5 +1071,68 @@ actual class TrainService actual constructor() {
                 }
             }.start()
         }
+    }
+
+    private suspend fun fetchViaggiaTrenoUpdate(train: TrainInfo): TrainInfo {
+        val num = train.categoryNumber.filter { it.isDigit() }
+        if (num.isBlank()) return train
+
+        try {
+            // 1. Suche Zug für ID (Logik aus TreniRT: verwende infomobilita Endpoint)
+            val searchUrl = "http://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/cercaNumeroTrenoTrenoAutocomplete/$num"
+            val searchRes = withContext(Dispatchers.IO) {
+                Jsoup.connect(searchUrl)
+                    .ignoreContentType(true)
+                    .timeout(10000)
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36")
+                    .execute()
+                    .body()
+                    .trim()
+            }
+
+            if (searchRes.isNotEmpty()) {
+                val line = searchRes.lines().firstOrNull { it.contains("|") } ?: return train
+                val parts = line.split("|")
+                if (parts.size >= 2) {
+                    val meta = parts[1]
+                    val metaParts = meta.split("-")
+                    val trainNum = metaParts.getOrNull(0)?.trim() ?: ""
+                    val originId = metaParts.getOrNull(1)?.trim() ?: ""
+                    val referenceDay = metaParts.getOrNull(2)?.trim() ?: ""
+
+                    if (trainNum.isNotEmpty() && originId.isNotEmpty()) {
+                        // 2. Andamento abfragen
+                        val andamentoUrl = if (referenceDay.isNotEmpty()) {
+                            "http://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/andamentoTreno/$originId/$trainNum/$referenceDay"
+                        } else {
+                            "http://www.viaggiatreno.it/infomobilita/resteasy/viaggiatreno/andamentoTreno/$originId/$trainNum"
+                        }
+
+                        val andamentoRes = withContext(Dispatchers.IO) {
+                            Jsoup.connect(andamentoUrl)
+                                .ignoreContentType(true)
+                                .timeout(10000)
+                                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36")
+                                .execute()
+                                .body()
+                        }
+
+                        val root = json.parseToJsonElement(andamentoRes) as? JsonObject ?: return train
+                        val ritardo = (root["ritardo"] as? JsonPrimitive)?.intOrNull ?: -999
+                        val provvedimento = (root["provvedimento"] as? JsonPrimitive)?.intOrNull ?: 0
+                        val isSopresso = (provvedimento != 0) || (root["provvedimento"] as? JsonPrimitive)?.booleanOrNull == true
+
+                        if (isSopresso) {
+                            return train.copy(vtStatus = "entfällt", vtDelay = "")
+                        } else if (ritardo != -999) {
+                            val vtDisplay = if (ritardo >= 0) "+$ritardo" else ritardo.toString()
+                            val vtStatus = if (ritardo > 0) "Verspätung" else "pünktlich"
+                            return train.copy(vtDelay = vtDisplay, vtStatus = vtStatus)
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) { }
+        return train
     }
 }
