@@ -11,6 +11,7 @@ import com.russhwolf.settings.Settings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.CancellationException
 import java.awt.Color
+import java.awt.Dimension
 import java.awt.image.BufferedImage
 import java.time.LocalTime
 import kotlin.time.Duration.Companion.minutes
@@ -297,6 +298,8 @@ fun main() {
         ),
         visible = isWindowVisible,
     ) {
+        // Fixiert die minimale Fenstergröße, damit das Layout nicht "bricht"
+        window.minimumSize = Dimension(900, 600)
         App()
     }
 

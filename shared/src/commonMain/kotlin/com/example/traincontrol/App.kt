@@ -250,7 +250,7 @@ fun App() {
                 ) {
                     Text("Speichern")
                 }
-            }
+            },
         )
     }
 }
@@ -264,7 +264,7 @@ fun WeeklyTimerDialog(settings: Settings, southTyrolRed: Color, darkGray: Color,
         DayOfWeek.THURSDAY to "Donnerstag",
         DayOfWeek.FRIDAY to "Freitag",
         DayOfWeek.SATURDAY to "Samstag",
-        DayOfWeek.SUNDAY to "Sonntag"
+        DayOfWeek.SUNDAY to "Sonntag",
     )
 
     var editingDay by remember { mutableStateOf<DayOfWeek?>(null) }
@@ -483,7 +483,7 @@ fun TrainItem(train: TrainInfo) {
 
             // Mitte: RFI & Viaggiatreno (Gegencheck)
             Row(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.width(300.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -491,61 +491,79 @@ fun TrainItem(train: TrainInfo) {
                 val rfiAvailable = (train.rfiStatus != null) || (train.rfiDelay != null)
                 val rfiHasIssue = rfiAvailable && ((train.rfiStatus == "Verspätung") || (train.rfiStatus == "entfällt"))
                 val rfiColor = if (rfiHasIssue) MaterialTheme.colorScheme.error else lightGray
-                
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(110.dp)
+                ) {
                     Text(
                         text = if (rfiAvailable) (train.rfiDelay ?: "+0") else " ",
                         style = MaterialTheme.typography.bodySmall,
-                        color = rfiColor
+                        color = rfiColor,
+                        softWrap = false,
+                        maxLines = 1
                     )
                     Text(
                         text = "RFI-Anzeigetafel",
                         style = MaterialTheme.typography.labelSmall,
-                        color = lightGray
+                        color = lightGray,
+                        softWrap = false,
+                        maxLines = 1
                     )
                     Text(
                         text = if (rfiAvailable) (train.rfiStatus ?: "pünktlich") else "n/a",
                         style = MaterialTheme.typography.bodySmall,
-                        color = rfiColor
+                        color = rfiColor,
+                        softWrap = false,
+                        maxLines = 1
                     )
                 }
 
-                Spacer(modifier = Modifier.width(32.dp))
+                Spacer(modifier = Modifier.width(48.dp))
 
                 // VT Spalte
                 val vtAvailable = (train.vtStatus != null) || (train.vtDelay != null)
                 val vtHasIssue = vtAvailable && ((train.vtStatus == "Verspätung") || (train.vtStatus == "entfällt"))
                 val vtColor = if (vtHasIssue) MaterialTheme.colorScheme.error else lightGray
-                
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(110.dp)
+                ) {
                     Text(
                         text = if (vtAvailable) (train.vtDelay ?: "+0") else " ",
                         style = MaterialTheme.typography.bodySmall,
-                        color = vtColor
+                        color = vtColor,
+                        softWrap = false,
+                        maxLines = 1
                     )
                     Text(
                         text = "VT-Viaggiatreno",
                         style = MaterialTheme.typography.labelSmall,
-                        color = lightGray
+                        color = lightGray,
+                        softWrap = false,
+                        maxLines = 1
                     )
                     Text(
                         text = if (vtAvailable) (train.vtStatus ?: "pünktlich") else "n/a",
                         style = MaterialTheme.typography.bodySmall,
-                        color = vtColor
+                        color = vtColor,
+                        softWrap = false,
+                        maxLines = 1
                     )
                 }
             }
 
             // Rechts: Uhrzeit und EFA-Status
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.width(120.dp),
                 horizontalAlignment = Alignment.End
             ) {
                 Text(train.time, style = MaterialTheme.typography.titleMedium)
                 Text(
                     text = train.delay,
                     color = if (train.hasDelay) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    softWrap = false,
+                    maxLines = 1
                 )
             }
         }
@@ -564,11 +582,11 @@ fun setWindowsAutostart(enable: Boolean) {
                 ?: File(System.getProperty("user.dir"), "TrainControlSTmobil.exe").absolutePath
 
             if (enable) {
-                val psScript = """
-                    ${'$'}WshShell = New-Object -comObject WScript.Shell;
-                    ${'$'}Shortcut = ${'$'}WshShell.CreateShortcut('${shortcutFile.absolutePath}');
-                    ${'$'}Shortcut.TargetPath = '$appPath';
-                    ${'$'}Shortcut.Save();
+                val psScript = $$"""
+                    $WshShell = New-Object -comObject WScript.Shell;
+                    $Shortcut = $WshShell.CreateShortcut('$${shortcutFile.absolutePath}');
+                    $Shortcut.TargetPath = '$${appPath}';
+                    $Shortcut.Save();
                 """.trimIndent()
 
                 val process = ProcessBuilder("powershell.exe", "-Command", psScript).start()
